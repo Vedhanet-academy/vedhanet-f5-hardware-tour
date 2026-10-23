@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VedhaNet Academy — F5 Hardware Inside Tour 3D</title>
+<meta name="description" content="Free interactive 3D tour inside F5 BIG-IP hardware (rSeries, iSeries and VELOS) by VedhaNet Academy.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:title" content="F5 Hardware Inside Tour 3D — VedhaNet Academy">
+<meta property="og:description" content="Open an F5 box in 3D, follow a packet through TMM, simulate faults, learn the cabling and quiz yourself. Free.">
+<meta property="og:image" content="https://hardware.vedhanetacademy.com/assets/og-image.png">
+<meta property="og:url" content="https://hardware.vedhanetacademy.com/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121b2e; --panel-2:#0f1626; --border:#233049;
+    --text:#e7edf7; --muted:#8ea0bd; --accent:#ff8c1a; --accent-2:#3b8bff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;}
+  a{color:inherit;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
+
+  header{border-bottom:1px solid var(--border);background:var(--panel-2);}
+  header .wrap{display:flex;align-items:center;gap:12px;padding-top:10px;padding-bottom:10px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+  .brand img{height:42px;border-radius:8px;display:block;}
+  .brand b{font-size:16px;font-weight:800;}
+  .brand b span{color:var(--accent);}
+  .ctas{margin-left:auto;display:flex;gap:8px;}
+  .btn{display:inline-block;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:700;font-size:14px;border:1px solid var(--border);background:var(--panel);color:var(--text);}
+  .cta-demo{background:linear-gradient(135deg,#ff8c1a,#ff5a1f);color:#fff;border:none;}
+  .cta-wa{background:#25d366;color:#06240f;border:none;}
+
+  .hero{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;padding:48px 0 30px;}
+  .hero .kicker{color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px;}
+  .hero h1{font-size:44px;line-height:1.1;margin:10px 0 14px;}
+  .hero h1 em{font-style:normal;color:var(--accent);}
+  .hero p{color:var(--muted);font-size:17px;line-height:1.6;margin:0 0 22px;}
+  .hero .actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .hero .actions .btn{font-size:15px;padding:12px 20px;}
+  .btn.go{background:linear-gradient(135deg,#ff8c1a,#3b8bff);color:#fff;border:none;}
+  .hero-img{border-radius:20px;overflow:hidden;border:1px solid var(--border);box-shadow:0 30px 60px -20px rgba(255,140,26,.35);}
+  .hero-img img{display:block;width:100%;height:auto;}
+
+  h2{font-size:24px;margin:34px 0 14px;}
+  .labs{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+  .lab{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;text-decoration:none;transition:transform .15s,border-color .15s;}
+  .lab:hover{transform:translateY(-3px);border-color:var(--accent);}
+  .lab .band{height:8px;}
+  .lab .body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1;}
+  .lab .tag{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);}
+  .lab h3{font-size:22px;margin:6px 0 8px;}
+  .lab p{color:var(--muted);line-height:1.55;margin:0 0 12px;font-size:15px;}
+  .lab ul{margin:0 0 16px;padding-left:18px;line-height:1.7;font-size:14.5px;}
+  .lab .open{margin-top:auto;font-weight:800;color:var(--accent);}
+  .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:4px 0 16px;}
+  .feats div{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--muted);font-size:14px;line-height:1.5;}
+  .feats b{display:block;color:var(--text);font-size:15px;margin-bottom:3px;}
+
+  .why{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .why div{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;}
+  .why b{display:block;font-size:16px;margin-bottom:4px;}
+  .why span{color:var(--muted);font-size:14px;line-height:1.5;}
+
+  .band-cta{margin:40px 0 30px;padding:26px;border-radius:18px;border:1px solid rgba(255,140,26,.45);background:linear-gradient(135deg,rgba(255,140,26,.12),rgba(59,139,255,.1));display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+  .band-cta h3{margin:0 0 4px;font-size:22px;}
+  .band-cta p{margin:0;color:var(--muted);}
+  .band-cta .ctas{margin-left:auto;}
+
+  footer{border-top:1px solid var(--border);padding:16px 0 24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6;}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;padding-top:28px;gap:24px;}
+    .hero h1{font-size:32px;}
+    .why,.feats{grid-template-columns:1fr;}
+    .ctas{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/logo-mark.png" alt="VedhaNet Academy logo"><b>Vedha<span>Net</span> Academy</b></a>
+    <div class="ctas">
+      <a class="btn cta-demo" data-cta="demo" target="_blank" rel="noopener">Book free demo</a>
+      <a class="btn cta-wa" data-cta="whatsapp" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="kicker">Free interactive 3D lab</div>
+      <h1>Learn F5 BIG-IP by <em>opening the box</em> — not by reading slides.</h1>
+      <p>Rotate real F5 hardware in 3D, follow a packet through TMM, break things on purpose with the fault simulator, and test yourself with a quiz. Built by VedhaNet Academy for network engineers.</p>
+      <div class="actions">
+        <a class="btn go" href="f5-hardware-inside-tour.html">Start the 3D tour ▶</a>
+      </div>
+    </div>
+    <div class="hero-img"><img src="assets/logo-full.png" alt="VedhaNet Academy — Learn, Practice, Grow"></div>
+  </section>
+
+  <h2>What's inside the tour</h2>
+  <a class="lab" href="f5-hardware-inside-tour.html">
+    <div class="band" style="background:linear-gradient(90deg,#ff8c1a,#3b8bff)"></div>
+    <div class="body">
+      <div class="tag">3D · rSeries · iSeries · VELOS</div>
+      <h3>F5 Hardware Inside Tour</h3>
+      <p>Unscrew the cover and explore every part — CPU, DAG, TMM, PSUs, fans, ports and LEDs.</p>
+      <div class="feats">
+        <div><b>Rotate 360° &amp; open the box</b>Tap the cover screws, lift the lid and see the board inside.</div>
+        <div><b>Tap any part</b>It lifts out and explains what it is, why F5 needs it and how it works.</div>
+        <div><b>Packet flow</b>Follow a packet: port → switch → DAG → TMM → server and back.</div>
+        <div><b>Fault simulator</b>PSU, fan, link down, TMM crash and HA failover — see the LEDs react.</div>
+        <div><b>Cabling</b>Core, server, HA peer, management, console and A+B power.</div>
+        <div><b>Quiz</b>10 random parts, labels hidden — find them on the model and score.</div>
+      </div>
+      <span class="open">Open the tour →</span>
+    </div>
+  </a>
+
+  <h2>Why VedhaNet Academy</h2>
+  <div class="why">
+    <div><b>Hands-on labs</b><span>Practise on real scenarios, not just theory.</span></div>
+    <div><b>Real-world troubleshooting</b><span>Faults, failovers and cabling the way they happen in production.</span></div>
+    <div><b>Interview support</b><span>The questions F5 engineers actually get asked — and how to answer them.</span></div>
+  </div>
+
+  <div class="band-cta">
+    <div>
+      <h3>Want to master F5 BIG-IP?</h3>
+      <p>Join VedhaNet Academy's live F5 course — LTM, GTM, ASM, labs and interview preparation.</p>
+    </div>
+    <div class="ctas">
+      <a class="btn cta-demo" data-cta="demo" data-text="Join the F5 course" target="_blank" rel="noopener">Join the F5 course</a>
+      <a class="btn cta-wa" data-cta="whatsapp" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </div>
+</main>
+
+<footer class="wrap">
+  © VedhaNet Academy · Learn · Practice · Grow<br>
+  Independent teaching tool — not affiliated with or endorsed by F5, Inc. F5, BIG-IP, rSeries, iSeries and VELOS are trademarks of F5, Inc.
+</footer>
+
+<script src="assets/brand.js"></script>
+</body>
+</html>

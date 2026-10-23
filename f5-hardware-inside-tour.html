@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VedhaNet Academy — F5 Hardware Inside Tour 3D</title>
+<meta name="description" content="Free interactive 3D tour of F5 BIG-IP hardware (rSeries, iSeries, VELOS) by VedhaNet Academy: open the box, follow a packet through TMM, simulate faults, learn the cabling and test yourself with a quiz.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:title" content="F5 Hardware Inside Tour 3D — VedhaNet Academy">
+<meta property="og:description" content="Rotate 360°, open the box, watch a packet travel through TMM, simulate faults and quiz yourself. Free interactive lab.">
+<meta property="og:image" content="https://hardware.vedhanetacademy.com/assets/og-image.png">
+<meta property="og:url" content="https://hardware.vedhanetacademy.com/f5-hardware-inside-tour.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121b2e; --panel-2:#0f1626; --border:#233049;
+    --text:#e7edf7; --muted:#8ea0bd; --accent:#ff8c1a; --accent-2:#3b8bff; --warn:#f5a524;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);
+    font-family:-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;}
+  .app{display:grid;grid-template-rows:auto 1fr auto;height:100vh;}
+
+  header{display:flex;align-items:center;gap:14px;padding:8px 18px;border-bottom:1px solid var(--border);background:var(--panel-2);flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;}
+  .logo-img{height:42px;width:auto;border-radius:8px;display:block;flex-shrink:0;}
+  .brand-name{font-weight:800;font-size:15px;}
+  .brand-name span{color:var(--accent);}
+  .brand-name em{font-style:normal;font-weight:600;color:var(--muted);}
+  .brand-tag{font-size:11.5px;color:var(--muted);}
+  .ptabs{display:flex;gap:6px;margin-left:auto;}
+  .cta-row{display:flex;gap:6px;}
+  .btn.cta-demo{background:linear-gradient(135deg,#ff8c1a,#ff5a1f);color:#fff;border:none;text-decoration:none;display:inline-block;}
+  .btn.cta-wa{background:#25d366;color:#06240f;border:none;text-decoration:none;display:inline-block;}
+  footer.tm{font-size:11px;color:var(--muted);padding:6px 16px;border-top:1px solid var(--border);background:var(--panel-2);text-align:center;}
+  .qz-cta{margin-top:16px;padding:12px 13px;border-radius:10px;border:1px solid rgba(255,140,26,.5);background:rgba(255,140,26,.08);font-size:14px;line-height:1.5;}
+  .qz-cta .fc-nav{padding-top:10px;margin-top:0;}
+  .ptab{background:var(--panel);border:1px solid var(--border);color:var(--muted);
+    padding:8px 16px;border-radius:9px;font-size:13.5px;cursor:pointer;font-weight:600;}
+  .ptab.active{background:rgba(255,140,26,.12);border-color:var(--accent);color:var(--accent);}
+
+  .workspace{display:grid;grid-template-columns:1fr 370px;min-height:0;}
+  .stage{position:relative;min-height:0;overflow:hidden;touch-action:none;
+    background-color:#0f1626;background-image:radial-gradient(rgba(255,255,255,.07) 1px, transparent 1px);background-size:22px 22px;}
+  .stage canvas{display:block;width:100%;height:100%;cursor:grab;}
+  .stage canvas.dragging{cursor:grabbing;}
+  .stage canvas.hot{cursor:pointer;}
+
+  #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .lbl{position:absolute;left:0;top:0;pointer-events:none;}
+  .lbl::before{content:'';position:absolute;left:-3.5px;top:-3.5px;width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  .lbl::after{content:'';position:absolute;left:-.5px;top:-20px;width:1px;height:17px;background:rgba(142,160,189,.8);}
+  .lbl span{position:absolute;bottom:19px;left:0;transform:translateX(-50%);white-space:nowrap;pointer-events:auto;cursor:pointer;
+    background:rgba(11,18,32,.92);border:1px solid #3a4a68;color:var(--text);border-radius:999px;padding:4px 11px;
+    font:600 12.5px ui-monospace,Consolas,monospace;}
+  .lbl span:hover,.lbl.sel span{border-color:var(--accent);background:#2a1a0b;}
+  .lbl.tmm span{background:#1d1840;border-color:#8b7cf6;color:#ddd7ff;}
+  .lbl.tmm::before{background:#8b7cf6;}
+  .lbl.gold span{background:#2a2416;border-color:#f2c14e;color:#f6d684;}
+  .lbl.gold::before{background:#f2c14e;}
+  .lbl.cta span{background:var(--accent);color:#07131f;border-color:var(--accent);font:700 13.5px Segoe UI,Arial,sans-serif;padding:7px 14px;}
+
+  #hoverTip{position:absolute;pointer-events:none;background:#0b1220;border:1px solid var(--accent);color:var(--text);
+    padding:4px 9px;border-radius:7px;font-size:12.5px;display:none;white-space:nowrap;z-index:5;}
+  .stage-help{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);background:rgba(11,18,32,.75);
+    padding:6px 10px;border-radius:8px;border:1px solid var(--border);pointer-events:none;}
+  .view-btns{position:absolute;right:12px;bottom:10px;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+  .vbtn{background:rgba(18,27,46,.92);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;}
+  .vbtn:hover{border-color:var(--accent);}
+  .vbtn.on{border-color:var(--accent);color:var(--accent);}
+  #stageMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--warn);font-size:15px;padding:30px;text-align:center;}
+
+  .sidebar{overflow-y:auto;border-left:1px solid var(--border);padding:14px 15px 24px;background:var(--panel-2);}
+  .model{font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.45;}
+  .model b{color:var(--text);}
+  .actions{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+  .btn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:9px;font-size:13px;cursor:pointer;font-weight:600;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#07131f;border:none;}
+  .btn.on{border-color:var(--accent);color:var(--accent);}
+
+  .card{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:13px 14px;margin-bottom:12px;}
+  .card h2{font-size:16.5px;margin:0 0 6px;color:var(--accent);}
+  .card p{font-size:14px;line-height:1.55;margin:0;}
+  .card .acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+  .card .acts:empty{display:none;}
+
+  .gname{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{background:var(--panel);border:1.5px solid var(--border);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;}
+  .chip:hover{border-color:var(--accent-2);}
+  .chip.sel{border-color:var(--accent);background:rgba(255,140,26,.12);color:var(--accent);}
+
+  details{margin-top:12px;border:1px solid var(--border);border-radius:10px;padding:8px 11px;background:var(--panel);}
+  summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--text);}
+  .legend{display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted);margin-top:9px;}
+  .led-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:7px;box-shadow:0 0 6px 1px currentColor;vertical-align:middle;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px;}
+  td{padding:6px 4px;border-bottom:1px solid var(--border);vertical-align:top;}
+  td.n{color:var(--muted);}
+  .disc{font-size:11.5px;color:var(--warn);line-height:1.5;margin-top:8px;}
+  .src{font-size:11.5px;line-height:1.7;margin-top:6px;}
+  .src a{color:var(--accent-2);}
+
+  @media (max-width:920px){
+    html,body{overflow:auto;}
+    .app{height:auto;}
+    header{flex-wrap:wrap;}
+    .ptabs{margin-left:0;}
+    .workspace{grid-template-columns:1fr;}
+    .stage{height:64vh;}
+    .sidebar{border-left:none;border-top:1px solid var(--border);}
+  }
+
+  #focusCard,#flowCard,#quizCard,#faultCard,#cableCard{position:absolute;left:14px;top:14px;bottom:50px;width:390px;display:none;flex-direction:column;
+    background:rgba(11,18,32,.95);border:1px solid var(--accent);border-radius:14px;padding:16px 18px;overflow-y:auto;z-index:6;
+    box-shadow:0 18px 40px -12px rgba(0,0,0,.7);touch-action:pan-y;}
+  #focusCard.show,#flowCard.show,#quizCard.show,#faultCard.show,#cableCard.show{display:flex;}
+  .ft-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .ft-item{text-align:left;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--text);font:inherit;}
+  .ft-item b{display:block;font-size:14.5px;}
+  .ft-item span{font-size:12.5px;color:var(--muted);}
+  .ft-item:hover{border-color:#f0495a;}
+  .ft-panel{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:10px;font:600 12px ui-monospace,Consolas,monospace;color:var(--muted);}
+  .ft-led{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px;box-shadow:0 0 6px 1px currentColor;}
+  .ft-led.blink{animation:ftb .9s steps(1) infinite;}
+  @keyframes ftb{50%{opacity:.15;}}
+  .ft-lcd{margin-top:10px;background:#0d2a2a;border:2px solid #16494a;border-radius:6px;padding:8px 10px;font:700 13px ui-monospace,Consolas,monospace;color:#5ef2e6;letter-spacing:.05em;}
+  .ft-lcd.alarm{color:#ffb347;}
+  .ft-lcd.off{background:#0a0d12;color:#33404f;border-color:#1a2230;}
+  .ft-ha{display:flex;gap:8px;margin-top:10px;}
+  .ft-unit{flex:1;border:1px solid var(--border);border-radius:9px;padding:8px 10px;font-size:12.5px;background:var(--panel);}
+  .ft-unit b{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+  .ft-unit.traffic{border-color:#3b8bff;box-shadow:0 0 0 2px rgba(59,139,255,.25);}
+  .ft-st{font:700 13px ui-monospace,Consolas,monospace;}
+  .ft-st.ACTIVE{color:#3ddc84;} .ft-st.STANDBY{color:#f5c542;} .ft-st.OFFLINE,.ft-st.FAILED{color:#f0495a;} .ft-st.BOOTING{color:#8ea0bd;}
+  .ft-traffic{font-size:11.5px;color:#7fb2ff;margin-top:3px;}
+  .ft-temp{margin-top:8px;font:600 13px ui-monospace,Consolas,monospace;color:var(--muted);}
+  .ft-temp b{color:#f5c542;} .ft-temp b.hot{color:#f0495a;}
+  .ft-sec ul,.ft-sec ol{margin:4px 0 0;padding-left:20px;font-size:14px;line-height:1.55;}
+  .ft-log{margin-top:12px;background:#070b14;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:12px ui-monospace,Consolas,monospace;color:#9fe3b0;}
+  .ft-log i{display:block;font-style:normal;color:var(--muted);font-size:10.5px;margin-bottom:3px;}
+  .cb-rows{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+  .cb-row{text-align:left;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;color:var(--text);font:inherit;}
+  .cb-row:hover{border-color:var(--accent-2);}
+  .cb-row.sel{border-color:var(--accent);background:rgba(255,140,26,.08);}
+  .cb-row .nm{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;}
+  .cb-sw{width:22px;height:6px;border-radius:3px;display:inline-block;flex-shrink:0;}
+  .cb-row .ds{display:none;font-size:13.5px;line-height:1.55;color:var(--text);margin-top:6px;}
+  .cb-row.sel .ds{display:block;}
+  .cb-rules{margin-top:14px;font-size:13px;line-height:1.6;color:var(--muted);}
+  .cb-rules b{color:var(--text);}
+  .btn.quiz{background:linear-gradient(135deg,#f5a524,#f0495a);color:#fff;border:none;}
+  .btn.fault{background:linear-gradient(135deg,#f0495a,#b4233a);color:#fff;border:none;}
+  .btn.cable{background:linear-gradient(135deg,#3b8bff,#22b8d3);color:#fff;border:none;}
+  .parts-wrap > summary{margin-bottom:2px;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .qz-row{display:flex;justify-content:space-between;font:600 13px ui-monospace,Consolas,monospace;color:var(--muted);margin-top:8px;}
+  .qz-row b{color:var(--accent);font-size:15px;}
+  .qz-ask{font-size:12px;color:var(--muted);margin-top:16px;text-transform:uppercase;letter-spacing:.08em;}
+  .qz-part{font-size:28px;font-weight:800;color:#fff;margin:2px 0 10px;line-height:1.2;}
+  .qz-msg{font-size:14.5px;line-height:1.55;padding:10px 12px;border-radius:8px;}
+  .qz-msg.ok{background:rgba(61,220,132,.12);border-left:3px solid #3ddc84;}
+  .qz-msg.bad{background:rgba(240,73,90,.12);border-left:3px solid #f0495a;}
+  .qz-msg.info{background:rgba(245,197,66,.1);border-left:3px solid #f5c542;}
+  .qz-dots{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px;}
+  .qz-dots i{width:14px;height:14px;border-radius:50%;background:#1a2438;border:1.5px solid #33405a;}
+  .qz-dots i.ok{background:#3ddc84;border-color:#3ddc84;}
+  .qz-dots i.half{background:#f5c542;border-color:#f5c542;}
+  .qz-dots i.miss{background:#f0495a;border-color:#f0495a;}
+  .qz-dots i.cur{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,140,26,.4);}
+  .qz-big{font-size:48px;font-weight:800;color:var(--accent);margin:6px 0 4px;}
+  .pkt-hdr{margin-top:8px;font:600 12.5px ui-monospace,Consolas,monospace;padding:7px 10px;border-radius:8px;border:1px solid;line-height:1.45;}
+  .pkt-hdr.req{color:#c7d6ff;border-color:#5b8cff;background:rgba(91,140,255,.12);}
+  .pkt-hdr.resp{color:#c9f5d9;border-color:#3ddc84;background:rgba(61,220,132,.1);}
+  .pkt-hdr:empty{display:none;}
+  .fl-bar{height:3px;background:#1a2438;border-radius:2px;margin-top:12px;overflow:hidden;}
+  .fl-bar i{display:block;height:100%;width:0;background:var(--accent);}
+  .fl-steps{margin:4px 0 0;padding-left:22px;font-size:13px;color:var(--muted);line-height:1.8;}
+  .fl-steps li{cursor:pointer;}
+  .fl-steps li:hover{color:var(--text);}
+  .fl-steps li.done{color:#7c8aa5;}
+  .fl-steps li.cur{color:var(--accent);font-weight:700;}
+  .fl-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:10px;}
+  .fl-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .btn.flow{background:linear-gradient(135deg,#5b8cff,#8b7cf6);color:#fff;border:none;}
+  .lbl.pkt::before,.lbl.pkt::after{display:none;}
+  .lbl.pkt span{bottom:14px;pointer-events:none;border-color:#5b8cff;color:#c7d6ff;font-size:11.5px;}
+  .lbl.pkt.resp span{border-color:#3ddc84;color:#c9f5d9;}
+  @media (max-width:920px){
+    .stage-help{display:none;}
+    .lbl span{font-size:10.5px;padding:3px 8px;}
+    .vbtn{padding:5px 8px;}
+    .logo-img{height:34px;}
+    #focusCard,#flowCard,#quizCard,#faultCard,#cableCard{left:8px;right:8px;width:auto;top:auto;bottom:8px;max-height:52%;}
+  }
+  .fc-tag{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+  .fc-title{font-size:23px;font-weight:800;color:var(--accent);margin:4px 0 2px;line-height:1.2;}
+  .fc-h{font-size:11.5px;font-weight:700;color:#f6d684;text-transform:uppercase;letter-spacing:.07em;margin:13px 0 4px;}
+  .fc-p{font-size:15px;line-height:1.58;margin:0;color:var(--text);}
+  .fc-tip{margin-top:14px;background:rgba(255,140,26,.08);border-left:3px solid var(--accent);padding:9px 11px;border-radius:6px;font-size:13.5px;line-height:1.5;}
+  .fc-nav{display:flex;gap:7px;margin-top:auto;padding-top:14px;flex-wrap:wrap;}
+  .fc-nav .btn{flex:1;}
+  code{font-family:ui-monospace,Consolas,monospace;background:#1a2438;padding:1px 5px;border-radius:4px;font-size:.92em;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="brand" href="index.html" title="All VedhaNet Academy labs">
+      <img class="logo-img" src="assets/logo-mark.png" alt="VedhaNet Academy logo">
+      <div>
+        <div class="brand-name">Vedha<span>Net</span> Academy <em>· F5 Hardware Inside Tour</em></div>
+        <div class="brand-tag">Rotate 360° · unscrew the cover · tap any part to lift it out and learn</div>
+      </div>
+    </a>
+    <div class="ptabs" id="ptabs"></div>
+    <div class="cta-row">
+      <a class="btn cta-demo" id="ctaDemo" target="_blank" rel="noopener">Book free demo</a>
+      <a class="btn cta-wa" id="ctaWa" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <div class="stage" id="stage">
+      <div id="labels"><div class="lbl pkt" id="pktTag" style="display:none"><span></span></div></div>
+      <div id="quizCard"></div>
+      <div id="faultCard"></div>
+      <div id="cableCard"></div>
+      <div id="flowCard">
+        <div class="fc-tag" id="flTag"></div>
+        <div class="fc-title" id="flTitle"></div>
+        <div class="pkt-hdr req" id="flHdr"></div>
+        <p class="fc-p" id="flText" style="margin-top:10px"></p>
+        <div class="fl-bar"><i id="flBar"></i></div>
+        <div class="fc-h">The journey</div>
+        <ol class="fl-steps" id="flSteps"></ol>
+        <div class="fl-legend"><span><i style="background:#5b8cff"></i>request</span><span><i style="background:#3ddc84"></i>response</span></div>
+        <div class="fc-nav">
+          <button class="btn" id="flPrev">◀ Prev</button>
+          <button class="btn primary" id="flPlay">❚❚ Pause</button>
+          <button class="btn" id="flNext">Next ▶</button>
+          <button class="btn" id="flStop">✕ Stop</button>
+        </div>
+      </div>
+      <div id="hoverTip"></div>
+      <div id="focusCard">
+        <div class="fc-tag" id="fcTag"></div>
+        <div class="fc-title" id="fcTitle"></div>
+        <div id="fcBody"></div>
+        <div class="fc-nav">
+          <button class="btn" id="fcPrev">◀ Prev</button>
+          <button class="btn" id="fcNext">Next ▶</button>
+          <button class="btn primary" id="fcBack">✕ Full view</button>
+        </div>
+      </div>
+      <div class="stage-help">Drag = rotate 360° · Scroll / pinch = zoom · Tap a part = explain · Esc = back</div>
+      <div class="view-btns">
+        <button class="vbtn" data-view="front">Front</button>
+        <button class="vbtn" data-view="back">Back</button>
+        <button class="vbtn" data-view="top">Top</button>
+        <button class="vbtn" data-view="under">Under</button>
+        <button class="vbtn" data-view="iso">3D</button>
+        <button class="vbtn" id="zIn">＋</button>
+        <button class="vbtn" id="zOut">－</button>
+      </div>
+      <div id="stageMsg">Loading 3D engine…</div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="model" id="model"></div>
+      <div class="actions">
+        <button class="btn primary" id="btnOpen">Unscrew &amp; open</button>
+        <button class="btn flow" id="btnFlow">Packet flow ▶</button>
+        <button class="btn quiz" id="btnQuiz">Quiz ▶</button>
+        <button class="btn fault" id="btnFault">Fault simulator</button>
+        <button class="btn cable" id="btnCable">Cabling</button>
+        <button class="btn on" id="btnLabels">Labels</button>
+        <button class="btn" id="btnAir">Airflow</button>
+        <button class="btn" id="btnSpin">Auto-rotate</button>
+        <button class="btn" id="btnTour">Guided tour ▶</button>
+      </div>
+
+      <div class="card">
+        <h2 id="infoTitle">Tap any part</h2>
+        <p id="infoText"></p>
+        <div class="acts" id="infoActs"></div>
+      </div>
+
+      <details class="parts-wrap" id="partsWrap" open>
+        <summary>All parts — tap one to explore</summary>
+        <div id="parts"></div>
+      </details>
+
+      <details>
+        <summary>LED colour legend</summary>
+        <div class="legend">
+          <span><i class="led-dot" style="background:#3ddc84;color:#3ddc84;"></i>Green — normal / link up / power good</span>
+          <span><i class="led-dot" style="background:#f5c542;color:#f5c542;"></i>Blinking amber — standby unit or booting</span>
+          <span><i class="led-dot" style="background:#f5a524;color:#f5a524;"></i>Solid amber — active alert / warning</span>
+          <span><i class="led-dot" style="background:#f0495a;color:#f0495a;"></i>Red — critical fault / emergency</span>
+          <span><i class="led-dot" style="background:#555;color:#555;"></i>Off — no link / not installed</span>
+        </div>
+      </details>
+      <details>
+        <summary>Model family</summary>
+        <table id="family"></table>
+      </details>
+      <details>
+        <summary>Disclaimer &amp; sources</summary>
+        <div class="disc">⚠ Teaching model, not an exact replica or datasheet. Internal layout is simplified; port counts, LEDs and specs vary by SKU and software version. Confirm against F5's official platform guide before production planning.</div>
+        <div class="src">
+          <div><a href="https://techdocs.f5.com/en-us/hardware/platform-guide-r5000r10000-series/title--platform-overview.html" target="_blank">F5 TechDocs — r5000/r10000 Platform Overview</a></div>
+          <div><a href="https://clouddocs.f5.com/training/community/rseries-training/html/rseries_appliances.html" target="_blank">F5 CloudDocs — rSeries Appliances</a></div>
+          <div><a href="https://clouddocs.f5.com/training/community/rseries-training/html/rseries_performance_and_sizing.html" target="_blank">F5 CloudDocs — rSeries Performance and Sizing</a></div>
+          <div><a href="https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/platform-i800/1.html" target="_blank">F5 TechDocs — i800 Platform Overview</a></div>
+          <div><a href="https://techdocs.f5.com/en-us/hw-platforms/platform-guide-i15000-series/title--platform-overview.html" target="_blank">F5 TechDocs — i15000 Platform Overview</a></div>
+          <div><a href="https://techdocs.f5.com/en-us/hardware/platform-guide-velos-cx-series/title-platform-overview.html" target="_blank">F5 TechDocs — VELOS CX Platform Overview</a></div>
+          <div><a href="https://techdocs.f5.com/en-us/hardware/platform-guide-velos-cx-series/title-platform-specifications.html" target="_blank">F5 TechDocs — VELOS CX Specifications</a></div>
+          <div><a href="https://clouddocs.f5.com/training/community/velos-training/html/velos_components.html" target="_blank">F5 CloudDocs — VELOS Components</a></div>
+        </div>
+      </details>
+    </aside>
+  </div>
+  <footer class="tm">© VedhaNet Academy · Independent teaching tool — not affiliated with or endorsed by F5, Inc. F5, BIG-IP, rSeries, iSeries and VELOS are trademarks of F5, Inc.</footer>
+</div>
+
+<script src="assets/brand.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  if(!window.THREE){ $('stageMsg').textContent = 'Could not load the 3D engine (three.js). Connect to the internet once and reload this page.'; return; }
+  $('stageMsg').remove();
+  const T = THREE;
+  const BRAND = Object.assign({courseText:'Join the F5 course'}, window.VEDHANET || {});
+  if(window.innerWidth < 920) $('partsWrap').open = false;
+
+  // ======================= DATA =======================
+  const platforms = {
+    rseries:{
+      label:'rSeries', model:'<b>rSeries</b> · r5000 / r10000 class · 1U appliance · dual hot-swap PSUs',
+      ports:[
+        {id:'mgmt',label:'MGMT port',sub:'1000BASE-T',tip:'Out-of-band management port (RJ45) — reaches the F5OS management UI/CLI, separate from data traffic.'},
+        {id:'console',label:'Console port',sub:'RS-232',tip:'Serial console — direct CLI access for first setup, licensing and recovery when the network is down.'},
+        {id:'ha',label:'HA failover port',sub:'hard-wired',tip:'Serial failover cable between two units — an HA pair can detect a hardware failure even if the network path is down.'},
+        {id:'usb',label:'USB port',sub:'USB 3.0',tip:'USB 3.0 port for firmware recovery, image installs, and exporting UCS/QKView files.'},
+        {id:'lcd',label:'LCD touchscreen',sub:'2.2"',tip:'2.2" touchscreen — shows host name/IP and alarms; silence alarms or reboot without SSH.'},
+        {id:'qsfp28',label:'QSFP28 ports',sub:'2× 100G/40G',tip:'High-speed uplinks (2 × 100G/40G) — usually the link toward the core/WAN.'},
+        {id:'sfp28',label:'SFP28 ports',sub:'8× 25G/10G',tip:'Data ports (8 × 25G/10G) — where client and server VLANs connect.'},
+      ],
+      leds:[
+        {id:'pwr',label:'PWR LED',color:'#3ddc84',tip:'Power LED — solid green when the power supplies are delivering power normally.'},
+        {id:'status',label:'STATUS LED',color:'#3ddc84',tip:'Status LED — green = running normally; blinking amber often means a standby unit in an HA pair or still booting.'},
+        {id:'alarm',label:'ALARM LED',color:'#555555',tip:'Alarm LED — lights amber/red when an alert is active; read the message on the LCD or in /var/log/ltm.'},
+      ],
+      psu:{id:'psu',label:'Power supply (PSU)',tip:'Hot-swap power supply — two at the back. AC (100–240V), standard DC, or high-voltage DC (180–400VDC) models exist and are NOT interchangeable. If one fails, the other carries the full load. Tap "Pull out" to slide it out.'},
+      internal:[
+        {id:'switch',label:'Switch ASIC',tip:'Internal switch silicon — every front data port connects here first; it feeds packets to the disaggregator.'},
+        {id:'hsb',label:'FPGA: HSB + DAG',tip:'High-Speed Bridge + disaggregator — hashes every new flow and hands it to exactly one TMM. On r5000/r10000-class units this is FPGA-accelerated.'},
+        {id:'sharedTable',label:'Shared table',tip:'Persistence & session tables — the only state shared by all TMMs. Everything else (the connection, SSL, iRules) is owned end-to-end by one TMM.'},
+        {id:'cpu',label:'CPU + heatsink',tip:'Multi-core Intel Xeon under the finned heatsink. Each core runs one TMM thread. Core count scales by model — e.g. r12900-DS: 36 cores / 72 vCPU, 12 reserved for F5OS.'},
+        {id:'tmm',label:'TMM (software)',tip:'Traffic Management Microkernel — the TMOS data plane. One TMM per CPU core; each runs the full proxy (LB, SSL, iRules) for the flows the DAG gave it. Shown as 4 here; real boxes run many more.'},
+        {id:'ram',label:'RAM (DIMMs)',tip:'Memory modules — roughly 32GB on entry models up to 512GB on the largest rSeries (r12900-DS). Connection tables and caches live here.'},
+        {id:'ssd',label:'SSD (M.2)',tip:'Solid-state drive — stores F5OS/TMOS images, configuration, logs and UCS/QKView archives.'},
+      ],
+      family:[
+        ['r2000 / r2800','Entry 1U, Atom-class CPU — branch/small site.'],
+        ['r4000 / r4600 / r4800','1U; r4600: Atom CPU, 64GB RAM, 4× 1/10GbE RJ45 + 4× 10/25GbE SFP.'],
+        ['r5000 / r5800 / r5900','1U, FPGA offload; r5800: 2× 40/100G + 8× 10/25G.'],
+        ['r10000 / r10900','1U high-end; r10900: 256GB RAM, 20 ports.'],
+        ['r12000-DS / r12900-DS','1U top; 36 cores / 72 vCPU, up to 512GB RAM.'],
+      ],
+    },
+    iseries:{
+      label:'iSeries', model:'<b>iSeries</b> · i15000 class · 1U appliance · TMOS-native',
+      ports:[
+        {id:'mgmt',label:'MGMT port',sub:'100/1000/10000',tip:'Out-of-band management port, up to 10GbE depending on model.'},
+        {id:'console',label:'Console port',sub:'serial',tip:'Serial console port for direct CLI access.'},
+        {id:'ha',label:'HA failover port',sub:'hard-wired',tip:'Hard-wired serial failover port for HA pairs.'},
+        {id:'usb',label:'USB port',sub:'USB 3.0',tip:'USB 3.0 recovery port for firmware/image installs.'},
+        {id:'lcd',label:'LCD touchscreen',sub:'2.2"',tip:'2.2" touchscreen for status checks and basic admin actions.'},
+        {id:'qsfp',label:'QSFP+ ports',sub:'8× 40GbE',tip:'8 × 40GbE data ports.'},
+        {id:'qsfp28',label:'QSFP28 ports',sub:'4× 100GbE',tip:'4 × 100GbE data ports — top throughput tier for this series.'},
+      ],
+      leds:[
+        {id:'pwr',label:'PWR LED',color:'#3ddc84',tip:'Power LED — solid green when the power supplies are delivering power normally.'},
+        {id:'status',label:'STATUS LED',color:'#3ddc84',tip:'Status LED — green = running normally; blinking amber often means standby/booting.'},
+        {id:'alarm',label:'ALARM LED',color:'#555555',tip:'Alarm LED — lights amber/red when an alert is active.'},
+      ],
+      psu:{id:'psu',label:'Power supply (PSU)',tip:'Hot-swap power supply — count/wattage vary by iSeries tier (i800 entry units may ship with one). Tap "Pull out" to slide it out.'},
+      internal:[
+        {id:'switch',label:'Switch ASIC',tip:'Internal switch silicon connecting the front ports to the disaggregator.'},
+        {id:'hsb',label:'FPGA: HSB + DAG',tip:'High-Speed Bridge + disaggregator — hashes each flow to exactly one TMM. On the larger iSeries models (i5000 and up) this is a programmable FPGA (TurboFlex profiles) that can also offload work in hardware.'},
+        {id:'sharedTable',label:'Shared table',tip:'Persistence & session tables — the only state shared by all TMMs.'},
+        {id:'cpu',label:'CPU + heatsink',tip:'Multi-core Intel Xeon under the heatsink; one TMM per core. Core count scales from i800 to i15000.'},
+        {id:'tmm',label:'TMM (software)',tip:'Traffic Management Microkernel — one per CPU core, each running the full proxy for its own flows. Shown as 4 here; real boxes run many more.'},
+        {id:'ram',label:'RAM (DIMMs)',tip:'Memory modules — size scales with tier.'},
+        {id:'ssd',label:'SSD',tip:'Solid-state drive for the OS, configuration, logs and UCS archives.'},
+      ],
+      family:[
+        ['i800 series','Entry 1U: 4× 1GbE SFP + 2× 10GbE SFP+, LCD.'],
+        ['i2000 / i4000','Low/mid 1U, TMOS-native.'],
+        ['i5000 – i11000','Mid-high 1U family.'],
+        ['i15000 series','Top: 8× 40GbE QSFP+ + 4× 100GbE QSFP28.'],
+      ],
+    },
+    velos:{
+      label:'VELOS', model:'<b>VELOS</b> · CX410 chassis · 4U · 2× SX410 controllers + 8× BX110 blades',
+      ports:[
+        {id:'mgmt',label:'MGMT port',sub:'10GbE',tip:'10GbE management port on each SX410 system controller.'},
+        {id:'console',label:'Console port',sub:'RJ45 serial',tip:'Serial console port on each SX410 controller.'},
+        {id:'usb',label:'USB port',sub:'USB 3.0',tip:'USB 3.0 port for recovery media on the SX410 controller.'},
+        {id:'lcd',label:'LCD display',sub:'',tip:'Display module on the system controller — shows status; Status and Alarm LEDs sit beside it.'},
+        {id:'qsfp28',label:'QSFP28 ports',sub:'per blade',tip:'100G QSFP28 ports on each BX110 blade — run as 100G, 40G (QSFP+ module), or break out to 4×25G / 4×10G.'},
+      ],
+      leds:[
+        {id:'status',label:'STATUS LED',color:'#3ddc84',tip:'Status LED on the controller display module.'},
+        {id:'alarm',label:'ALARM LED',color:'#555555',tip:'Alarm LED on the controller display module.'},
+      ],
+      psu:{id:'psu',label:'Power supply (PSU)',tip:'Redundant hot-swap power supplies for the whole chassis, at the back. AC and NEBS-compliant DC versions exist. Tap "Pull out" to slide one out.'},
+      internal:[
+        {id:'controller',label:'SX410 system controller',tip:'Runs the chassis control plane (F5OS-C) — 10GbE mgmt, 32GB RAM, 1TB SSD. Two controllers run active/standby, so losing one does not stop traffic. Tap "Pull out" to slide it out.'},
+        {id:'blade',label:'BX110 blade',tip:'Data-plane blade — its own CPU, RAM and TMMs. Blades are grouped into partitions that run tenants. About 7.3 lb (3.3 kg). Tap "Pull out" to slide it out of the chassis.'},
+        {id:'tmm',label:'TMM (per blade)',tip:'Every BX110 blade runs its own TMMs. VELOS scales by adding blades — more blades, more TMMs, more throughput.'},
+        {id:'fabric',label:'Backplane (chassis fabric)',tip:'The gold board every blade and controller plugs into — it connects blades to each other and to both system controllers.'},
+      ],
+      family:[
+        ['CX410 chassis','4U, 8 blade slots + 2 controller slots.'],
+        ['SX410 controller','10GbE mgmt, console, USB 3.0, 32GB RAM, 1TB SSD.'],
+        ['BX110 blade','QSFP28 ports, splittable to 4×25G/10G; ~7.3 lb.'],
+        ['Other VELOS SKUs','Confirm current lineup on f5.com.'],
+      ],
+    },
+  };
+
+  const EXTRA = {
+    chassis:{label:'Chassis (tray)',tip:'Steel 1U chassis — 19 inches wide, 1.75 inches tall. Cool air enters at the front and leaves at the back.'},
+    chassisV:{label:'CX410 chassis',tip:'4U steel chassis — 8 blade slots and 2 system-controller slots at the front, fans and power supplies at the back.'},
+    frontPanel:{label:'Front panel',tip:'All cabling — management, console and data ports — plus the LCD and LEDs are on the front, so the unit can be serviced from the cold aisle.'},
+    lid:{label:'Top cover',tip:'The steel lid, held down by cover screws. Tap each screw to remove it (or press "Unscrew & open") — when the last screw is out, the lid lifts off. Never open a running production unit.'},
+    lidScrew:{label:'Cover screw',tip:'Phillips screw that holds the top cover down. Opening the chassis is normally done only by F5 or authorized service — in the field you swap PSUs, fans and optics.'},
+    earScrew:{label:'Rack-ear screw',tip:'Bolts the rack ear to the rack rail (into a cage nut). Heavy chassis should sit on rails or a shelf — ears alone should not carry the full weight.'},
+    boardScrew:{label:'Board mounting screw',tip:'Screws the main board onto metal standoffs in the tray — it also grounds the board to the chassis.'},
+    board:{label:'Main board (PCB)',tip:'The motherboard — carries the CPU, memory, switch silicon, crypto chip and SSD. The gold lines are copper traces linking them to the front ports.'},
+    ears:{label:'Rack ears',tip:'Brackets that mount the chassis in a standard 19-inch rack. 1U = 1.75 inches tall; VELOS CX410 is 4U.'},
+    bezel:{label:'Front bezel',tip:'Removable front cover with air vents. It sits in front of the ports — shown pulled off here. Use the button to attach or remove it.'},
+    fans:{label:'Fan module',tip:'Hot-swap fans pull cool air from the front to the back across the CPU heatsink, memory and power supplies. A failed fan raises an alarm on the LED/LCD.'},
+    crypto:{label:'SSL / crypto offload',tip:'Dedicated crypto and compression hardware — handles bulk TLS encryption so the CPU cores running TMM stay free for traffic logic. The exact chip varies by model.'},
+    aom:{label:'Management controller (AOM)',tip:'A small always-on management processor (F5 calls it AOM on many platforms). It keeps the LCD, console and power control working even if the main system hangs.'},
+    battery:{label:'RTC battery',tip:'Coin-cell battery that keeps the hardware clock running while the unit is unplugged.'},
+    vrm:{label:'Voltage regulators',tip:'Convert the 12V from the power supplies into the low voltages the CPU, memory and chips need. The small cylinders are capacitors.'},
+  };
+
+  // Teaching content shown in focus mode: what it is / why F5 needs it / how it works in F5.
+  const LEARN = {
+    ssd:{what:'A Solid-State Drive — flash storage with no moving parts. Here it is a small M.2 stick screwed flat onto the main board.',
+      why:'RAM forgets everything when the power goes off; the SSD does not. F5 needs a permanent place for its software and your configuration — and flash is fast, quiet, and has no spinning disk to fail from heat or vibration.',
+      how:'It stores the boot volumes (the F5OS / TMOS software images), your saved configuration (`bigip.conf`), logs under `/var/log`, UCS backups and QKView files. `tmsh save sys config` writes to the SSD; at boot, the box reads the config from the SSD into RAM. The SSD is NOT in the traffic path — packets never touch it.',
+      tip:'Software upgrade = install the new image into a spare boot volume on this SSD, then switch the boot location. That is why one box can hold 2–3 software versions at once.'},
+    cpu:{what:'The main processor — a multi-core Intel Xeon. The finned metal block on top is its heatsink, which carries heat away into the airflow.',
+      why:'Almost every F5 feature is software: L7 load balancing, iRules, SSL handshakes, WAF, APM. Software needs CPU cores — more cores means more work done in parallel.',
+      how:'TMOS starts one TMM per core (per vCPU). The DAG hands each new connection to one TMM, so all cores work side by side. Management processes (mcpd, GUI, SSH) also need CPU; on rSeries some vCPUs are reserved for F5OS. Check load with `tmsh show sys cpu`.',
+      tip:'One core at 100% while the others are idle means traffic is not spreading evenly — look for a heavy iRule or one very large flow.'},
+    ram:{what:'Memory modules (DIMMs) — very fast, temporary storage that the CPU works from.',
+      why:'Everything happening right now lives in RAM: the running config, the connection table, persistence records, the SSL session cache, the web cache and iRule tables.',
+      how:'Each TMM gets its own slice of memory for its own connections. Millions of concurrent connections and caching need a lot of RAM — that is why big models carry 256–512 GB. Check usage with `tmsh show sys memory`. RAM is wiped on reboot — only the SSD keeps data.',
+      tip:'Memory exhaustion can make TMM restart and drop traffic — watch memory graphs on busy boxes.'},
+    tmm:{what:'TMM = Traffic Management Microkernel. It is not a chip — it is the TMOS data-plane software. The purple glass layers show it floating above the hardware it runs on.',
+      why:'F5 is a full proxy: every client connection is terminated and inspected, and a new server connection is opened. TMM is the engine that does all of it — load balancing, SSL, iRules, persistence, SNAT.',
+      how:'One TMM runs on each CPU core. Each TMM owns its connections end to end — the client side and the server side of the same flow stay on the same TMM. TMMs share only the persistence / session tables (the gold bar). List them with `tmsh show sys tmm-info`.',
+      tip:'If TMM restarts, traffic on that unit stops for a moment — exactly why we build HA pairs.'},
+    hsb:{what:'High-Speed Bridge + DisAGgregator (DAG) — a hardware chip between the switch chip and the CPU. On FPGA platforms it is a programmable FPGA.',
+      why:'With many TMMs running, something must decide which TMM gets each packet — at full line rate, without spending CPU time.',
+      how:'It hashes every flow (IP addresses + ports) and always sends that flow to the same TMM. F5 even picks the SNAT source port so the server’s reply hashes back to the same TMM. On supported platforms, simple FastL4 flows can be offloaded to the FPGA (ePVA) and never reach TMM; hardware SYN-cookie protection also lives here.',
+      tip:'Interview line: "The DAG keeps both sides of a connection on one TMM."'},
+    switch:{what:'The internal Ethernet switch chip (ASIC) — a small hardware switch built into the board.',
+      why:'Ports, VLANs and trunks must be handled at full line rate before packets reach the CPU.',
+      how:'Every packet from the front SFP / QSFP ports enters this chip first. It handles VLAN tags, link aggregation (trunks / LACP) and port mirroring, then forwards packets up to the HSB / DAG. Interface counters, errors and drops come from here: `tmsh show net interface all-properties`.',
+      tip:'CRC errors or link flaps? Check the interface stats first, then the optic and the cable.'},
+    crypto:{what:'A dedicated encryption / compression accelerator — SSL math done in hardware.',
+      why:'TLS handshakes (RSA / ECC) and bulk encryption (AES) are very CPU-heavy. Moving them to hardware keeps the CPU cores free for traffic logic.',
+      how:'When a virtual server does SSL offload (client-ssl profile), TMM sends the crypto work to this chip. Datasheet numbers like "SSL TPS" and "SSL bulk throughput" mostly come from this hardware. Virtual Editions without it do the same work in software, more slowly. The exact chip varies by model.',
+      tip:'Sizing a box for an SSL-heavy app? Compare SSL TPS (RSA and ECC), not just Gbps.'},
+    sharedTable:{what:'Not a physical part — the gold bar represents the tables that every TMM shares.',
+      why:'If a user is persisted to server 2, every TMM must know it — the user’s next connection may land on a different TMM.',
+      how:'Persistence records (cookie, source-address, …), session-DB entries and iRule `table` data are shared across TMMs. Everything else — the connection itself — belongs to one TMM only. View persistence with `tmsh show ltm persistence persist-records`.',
+      tip:'Shared = persistence & session data. Per-TMM = connections.'},
+    psu:{what:'Power Supply Unit — converts wall power (AC or DC) into the 12 V the system runs on.',
+      why:'A load balancer sits in front of every application. If it loses power, everything behind it goes offline.',
+      how:'Two hot-swap PSUs share the load. If one fails, the other carries everything and an alert appears on the LCD and in the logs. Plug each PSU into a different power feed (A and B). A failed PSU can be pulled and replaced while the box keeps running. Status: `tmsh show sys hardware`.',
+      tip:'AC, DC and HVDC supplies are different part numbers — never mix types in one box.'},
+    fans:{what:'Hot-swap fan modules that pull cool air in at the front and push hot air out the back.',
+      why:'CPUs, crypto chips and optics produce a lot of heat; without airflow the box slows itself down or shuts off to protect itself.',
+      how:'Fan speed rises automatically with temperature. A failed fan raises an alarm and can be replaced while running. In the rack, the front must face the cold aisle — reversed airflow overheats the unit. Temperatures and fan speeds: `tmsh show sys hardware`.',
+      tip:'Press "Airflow" to see the front-to-back air path.'},
+    aom:{what:'Always-On Management (AOM) — a tiny separate computer on the board with its own processor.',
+      why:'When the main system hangs, you still need a way in to see the console, check health or power-cycle the box.',
+      how:'AOM keeps the LCD, the serial console and power control working independently of TMOS. On classic BIG-IP hardware (for example iSeries), pressing Esc then ( on the serial console opens the AOM Command Menu, where you can reset or power-cycle the host.',
+      tip:'Remote-hands trick: a frozen unit can often be recovered through AOM without anyone visiting the data centre.'},
+    battery:{what:'A coin-cell battery for the real-time clock (RTC).',
+      why:'Keeps the hardware clock running while the box is unplugged or powered off.',
+      how:'Correct time matters for logs, certificate validity checks and HA config sync. Once booted, NTP keeps time accurate — the battery just gives a sane time before NTP is reachable.',
+      tip:'Always configure NTP — certificate and sync problems often start with a wrong clock.'},
+    vrm:{what:'Voltage regulators (VRMs) and capacitors — the small blocks and cylinders around the CPU.',
+      why:'The PSU delivers 12 V, but the CPU needs about 1 V at very high current, and memory needs its own voltages.',
+      how:'They convert and smooth the power right next to each chip. Clean, stable power stops crashes when traffic suddenly bursts and the CPU load jumps.',
+      tip:'Faults here show up as voltage sensor alarms in `tmsh show sys hardware`.'},
+    board:{what:'The main board (motherboard / PCB) — the green circuit board everything is mounted on.',
+      why:'It physically connects all the chips to each other and to the front ports.',
+      how:'Copper traces (the gold lines) carry packets: front port → switch chip → HSB / DAG → CPU / TMM, and back out the same way. It also carries power from the PSUs to every chip.',
+      tip:'Packet path to remember: Port → Switch → DAG → TMM → DAG → Switch → Port.'},
+    boardScrew:{what:'Screws that hold the main board onto metal standoffs in the chassis.',
+      why:'They keep the board firm against vibration and ground it electrically to the chassis.',
+      how:'Board-level parts are serviced only by F5 (RMA). In the field you replace PSUs, fans and optics — not the board.',
+      tip:'Hardware fault on the board = open an F5 support case for an RMA.'},
+    mgmt:{what:'The RJ45 management port (MGMT).',
+      why:'To manage the box without touching production traffic — this is called out-of-band management.',
+      how:'This is the IP you open in a browser for the GUI and the IP you SSH into. It is handled by Linux, not TMM, so it still works when TMM is down — and it never carries production traffic (F5 K13284).',
+      tip:'Never put production virtual servers or self-IPs on the management network.'},
+    console:{what:'The serial console port.',
+      why:'For first-time setup and for recovery when the network or the management IP is broken.',
+      how:'Connect a console cable and a terminal program (serial settings are in the platform guide). You get a CLI login even with no network. On BIG-IP TMOS, the `config` utility sets the management IP from here.',
+      tip:'Always keep console access (or a console server) for every production box.'},
+    ha:{what:'The hard-wired serial failover port.',
+      why:'Lets two units in an HA pair detect a hardware failure even if the network between them is down.',
+      how:'Network failover (heartbeats over VLANs) is the main method on modern versions; the serial cable is an extra backup heartbeat and works only for a 2-unit pair. If the active unit loses power, the signal on the cable drops and the standby takes over.',
+      tip:'Use network failover on at least two VLANs; add the serial cable only as a backup.'},
+    usb:{what:'A USB 3.0 port.',
+      why:'For recovery and file transfer when the network is not available.',
+      how:'Boot a recovery / install image from a USB drive, or copy QKView and UCS files off the box.',
+      tip:'Keep a recovery USB with a known-good image in the data-centre kit.'},
+    lcd:{what:'The LCD panel with buttons on the front.',
+      why:'Lets a technician check the box while standing in front of it — no laptop needed.',
+      how:'Shows the host name, management IP and active alarms. Its buttons can halt or reboot the unit and, on many models, set the management IP. Alarm messages stay until they are cleared.',
+      tip:'When a box is unreachable, ask remote hands to read the LCD first.'},
+    sfp28:{what:'SFP28 cages — slots for pluggable optics or copper modules (10G or 25G).',
+      why:'Pluggable optics let you choose fibre or copper, short or long distance, and the speed you need.',
+      how:'Each cage becomes an interface (1.1, 1.2 …). You put interfaces into VLANs (external / internal), bundle them into trunks (LACP), give the VLANs self-IPs, and your virtual servers listen on top. The small LED blinks with traffic.',
+      tip:'The optic and the switch side must match: same speed and same fibre type (SR / LR).'},
+    qsfp28:{what:'QSFP28 cages — slots for 40G or 100G optics (or breakout cables).',
+      why:'High-capacity uplinks to the core switches.',
+      how:'One QSFP28 can run as 1 × 100G, 1 × 40G, or be split with a breakout cable into 4 × 25G / 4 × 10G interfaces. They join VLANs and trunks just like the smaller ports.',
+      tip:'Breakout changes interface numbering — plan it before cabling.'},
+    qsfp:{what:'QSFP+ cages — slots for 40G optics.',
+      why:'High-capacity data links.',
+      how:'Each cage is an interface you place into VLANs and trunks. Some can be split into 4 × 10G with a breakout cable.',
+      tip:'Use optics from F5’s supported list.'},
+    pwr:{what:'The power LED.', why:'A quick visual check that the box has power.',
+      how:'Solid green = power is good. If one PSU fails, a PSU alarm appears even though the box keeps running.', tip:''},
+    status:{what:'The system status LED.', why:'Shows the unit’s state at a glance.',
+      how:'Solid green = active / running normally. Blinking amber usually means a standby unit in an HA pair, or a unit still booting.',
+      tip:'In an HA pair, one green and one amber is normal.'},
+    alarm:{what:'The alarm LED.', why:'Warns that the system has an active alert.',
+      how:'Amber = warning, red = critical. The LCD shows the message and details are in `/var/log/ltm`. It may stay lit until the alert is cleared on the LCD.', tip:''},
+    bezel:{what:'The removable front bezel (cover) with air holes.', why:'Protects the front panel while letting cool air in.',
+      how:'It clips over the front panel; remove it to reach the LCD buttons and ports.', tip:''},
+    ears:{what:'Rack ears — brackets that bolt the chassis into a 19-inch rack.', why:'They hold the box in the rack.',
+      how:'1U = 1.75 inches tall. Heavy units should also sit on rails or a shelf — the ears alone should not carry the full weight.', tip:''},
+    earScrew:{what:'Rack screws that fix the ears to the rack rails (into cage nuts).', why:'They stop the unit sliding out of the rack.',
+      how:'Remove these before sliding the unit out on its rails for service.', tip:''},
+    frontPanel:{what:'The front panel — where every cable plugs in.', why:'All cabling and indicators are at the front, so the box can be serviced from the cold aisle.',
+      how:'Management, console, data ports, LCD and LEDs are all here.', tip:''},
+    chassis:{what:'The steel chassis (tray).', why:'It holds and protects all the parts and guides the airflow.',
+      how:'Air enters at the front, flows over the parts and leaves through the rear vents.', tip:''},
+  };
+  const LEARN_V = {
+    controller:{what:'SX410 system controller — the management "brain" of the VELOS chassis.',
+      why:'A chassis full of blades needs one place to manage the blades, partitions, software and the internal network.',
+      how:'It runs F5OS-C. There are two controllers (active / standby) — if one fails, the other takes over and traffic keeps flowing. They provide the chassis management IP, manage partitions and tenants, and connect to every blade through the backplane.',
+      tip:'Chassis management = controllers (F5OS-C). Traffic = blades (tenants).'},
+    blade:{what:'BX110 blade — a complete compute card: CPU, memory, FPGA and its own front network ports.',
+      why:'VELOS grows by adding blades instead of replacing the whole box.',
+      how:'Blades are grouped into partitions, and BIG-IP tenants run across the blades of a partition. More blades = more TMMs = more throughput. If one blade fails, tenants keep running on the others. Blades are hot-swap from the front.',
+      tip:'Capacity planning on VELOS = "how many blades", not "which box".'},
+    fabric:{what:'The backplane (chassis fabric) — the gold board every blade and controller plugs into.',
+      why:'Blades must talk to each other and to the controllers at very high speed.',
+      how:'It carries data between blades so a tenant spread across several blades works as one system, and carries management / control traffic to the controllers.', tip:''},
+    tmm:{what:'TMM = Traffic Management Microkernel — the TMOS data-plane software, shown as purple glass above each blade.',
+      why:'It does the real traffic work: load balancing, SSL, iRules, persistence.',
+      how:'Every blade runs its own TMMs (one per core given to the tenant). A tenant spread over 4 blades has TMMs on all 4 — adding blades adds TMMs.', tip:''},
+    psu:{what:'Chassis power supplies — hot-swap, at the back.',
+      why:'One chassis feeds every blade and controller, so its power must be redundant.',
+      how:'Several PSUs share the load; one can fail or be replaced while the chassis runs. Split them across A and B power feeds. AC and NEBS-compliant DC versions exist.', tip:''},
+    fans:{what:'Fan trays at the back of the chassis.', why:'Eight blades produce a lot of heat.',
+      how:'Air is pulled from front to back across the blades. Each tray is hot-swap, and a failed fan raises an alarm.', tip:''},
+    lcd:{what:'The display module on the system controller.', why:'A quick visual status for the chassis.',
+      how:'Shows chassis status, with the Status and Alarm LEDs beside it.', tip:''},
+    mgmt:{what:'The 10GbE management port on each system controller.', why:'Out-of-band access to the chassis (F5OS-C), separate from tenant traffic.',
+      how:'You reach the chassis management IP here for the F5OS GUI, CLI and API. Each tenant also gets its own management IP.', tip:''},
+    console:{what:'The serial console port on each system controller.', why:'Recovery access when the network is down.',
+      how:'Gives a CLI login to the controller even with no network connection.', tip:''},
+    chassis:{what:'The CX410 chassis — a 4U steel frame.', why:'It holds 8 blade slots and 2 controller slots at the front, with fans and power at the back.',
+      how:'Everything inside is modular and hot-swap, so the chassis itself rarely needs replacing.', tip:''},
+  };
+
+  let pid = 'rseries';
+  const state = {open:false, labels:true, air:false, spin:false};
+  let cur = null;
+
+  function lookup(id, obj){
+    const p = platforms[pid];
+    if(id === 'chassis' && pid === 'velos') return EXTRA.chassisV;
+    if(id === 'blade' && obj && obj.userData.slot){
+      const b = p.internal.find(x => x.id === 'blade');
+      return {label:'BX110 blade — slot ' + obj.userData.slot, tip:b.tip};
+    }
+    if(id === 'controller' && obj && obj.userData.slot){
+      const c = p.internal.find(x => x.id === 'controller');
+      return {label:'SX410 controller ' + obj.userData.slot, tip:c.tip};
+    }
+    if(id.startsWith('cab-')){
+      const r = cableRows().find(r => 'cab-' + r.key === id);
+      if(r) return {label:r.name, tip:r.desc};
+    }
+    const pools = [...p.ports, ...p.leds, p.psu, ...p.internal];
+    return pools.find(x => x.id === id) || EXTRA[id] || {label:id, tip:''};
+  }
+
+  // ======================= RENDERER =======================
+  const stage = $('stage'), labelLayer = $('labels'), tip = $('hoverTip');
+  const renderer = new T.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  stage.insertBefore(renderer.domElement, labelLayer);
+  const canvas = renderer.domElement;
+
+  const scene = new T.Scene();
+  const camera = new T.PerspectiveCamera(35, 1, 5, 9000);
+  scene.add(new T.HemisphereLight(0xffffff, 0x2a3550, 0.78));
+  const sun = new T.DirectionalLight(0xffffff, 0.8);
+  sun.position.set(500, 900, 650);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, {left:-750, right:750, top:750, bottom:-750, near:100, far:3000});
+  scene.add(sun);
+  const fill = new T.DirectionalLight(0xa9bcff, 0.35);
+  fill.position.set(-700, 300, -500);
+  scene.add(fill);
+  const ground = new T.Mesh(new T.PlaneGeometry(8000, 8000), new T.ShadowMaterial({opacity:.32}));
+  ground.rotation.x = -Math.PI/2; ground.position.y = -0.6; ground.receiveShadow = true;
+  scene.add(ground);
+
+  // ======================= BUILD HELPERS =======================
+  function mat(color, o={}){
+    return new T.MeshStandardMaterial({
+      color:new T.Color(color), roughness:o.r ?? .55, metalness:o.m ?? .15,
+      transparent:o.opacity != null, opacity:o.opacity ?? 1, depthWrite:o.opacity == null,
+      emissive:new T.Color(o.em || '#000000'), emissiveIntensity:o.ei ?? 1,
+    });
+  }
+  function C(w,h,d,color,x,y,z,o={}){
+    const m = new T.Mesh(new T.BoxGeometry(w,h,d), mat(color,o));
+    m.position.set(x + w/2, y + h/2, z + d/2);
+    m.castShadow = o.shadow !== false; m.receiveShadow = true;
+    return m;
+  }
+  function Cyl(r,h,color,x,y,z,axis='y',o={}){
+    const m = new T.Mesh(new T.CylinderGeometry(r,r,h,o.seg || 24), mat(color,o));
+    if(axis === 'z') m.rotation.x = Math.PI/2;
+    if(axis === 'x') m.rotation.z = Math.PI/2;
+    m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true;
+    return m;
+  }
+  function G(id, ...kids){
+    const g = new T.Group();
+    if(id) g.userData.id = id;
+    kids.flat().forEach(k => k && g.add(k));
+    return g;
+  }
+  function screw(x,y,z,axis,id){
+    const g = G(id);
+    g.add(Cyl(3.8,2,'#b8c0cc',0,0,0,'y',{m:.85,r:.3}));
+    g.add(C(6,.6,1.3,'#2a3140',-3,1,-.65,{shadow:false}), C(1.3,.6,6,'#2a3140',-.65,1,-3,{shadow:false}));
+    if(axis === 'z') g.rotation.x = Math.PI/2;
+    g.position.set(x,y,z);
+    g.userData.y0 = y;
+    return g;
+  }
+  function led(x,y,z,color){
+    const off = color === '#555555';
+    const m = new T.Mesh(new T.SphereGeometry(2.3,14,14), mat(color,{em:off ? '#000000' : color, ei:1.5, r:.3}));
+    m.position.set(x,y,z);
+    m.userData.isLed = true;
+    return m;
+  }
+  function rj45(id,x,y,zf,leds){
+    const g = G(id, C(14,12,3,'#262d3b',x,y,zf), C(9,7,1,'#05070b',x+2.5,y+2,zf+2.6,{shadow:false}));
+    if(leds) g.add(C(3,2,1,'#3ddc84',x+1,y+9.5,zf+2.6,{em:'#3ddc84'}), C(3,2,1,'#f5c542',x+10,y+9.5,zf+2.6,{em:'#f5c542'}));
+    return g;
+  }
+  function cage(g,x,y,zf,w,h){
+    const body = C(w,h,7,'#a3adbd',x,y,zf-4,{m:.7,r:.35});
+    g.add(body, C(w-3,h-6,1,'#05070b',x+1.5,y+3,zf+3.1,{shadow:false}));
+    (g.userData.cages ||= []).push(body);
+    const l = C(3,2,1,'#22d3c5',x+w/2-1.5,y+h+2,zf+.2,{em:'#22d3c5',ei:1.2});
+    l.userData.isLed = true; l.userData.port = true;
+    g.add(l); cur.blink.push(l);
+  }
+  function fanModule(x,y,z,s,id){
+    const d = s*.9, g = G(id);
+    const fc = '#2a3140';
+    g.add(C(s,3,d,fc,x,y,z), C(3,s,d,fc,x,y,z), C(3,s,d,fc,x+s-3,y,z), C(s,3,d,fc,x,y+s-3,z));
+    const cx = x + s/2, cy = y + s/2;
+    const ring = new T.Mesh(new T.TorusGeometry(s*.41, 2.2, 8, 36), mat('#e07b2c',{r:.5}));
+    ring.position.set(cx, cy, z + d); g.add(ring);
+    const rotor = new T.Group(); rotor.position.set(cx, cy, z + d/2);
+    rotor.add(Cyl(s*.13, d*.6, '#1a1f2a', 0,0,0,'z'));
+    for(let i = 0; i < 5; i++){
+      const a = i*2*Math.PI/5;
+      const b = new T.Mesh(new T.BoxGeometry(s*.34, s*.13, 1.6), mat('#3a4252'));
+      b.position.set(Math.cos(a)*s*.22, Math.sin(a)*s*.22, 0);
+      b.rotation.set(0, .35, a);
+      rotor.add(b);
+    }
+    rotor.userData.speed = 1;
+    g.add(rotor); cur.rotors.push(rotor);
+    g.userData.rotor = rotor;
+    return g;
+  }
+  function psu(x,y,z,w,h,d){
+    const g = G('psu');
+    g.add(C(w,h,d,'#c7ced9',x,y,z,{m:.5,r:.4}));
+    for(let r = 0; r < Math.floor((h-10)/7); r++) for(let c = 0; c < 6; c++) g.add(C(6,4,1,'#3b4352',x+6+c*9,y+5+r*7,z-.8,{shadow:false}));
+    g.add(C(20,13,3,'#111418',x+w-28,y+h/2-6,z-2.5));
+    [0,1,2].forEach(k => g.add(C(1.6,4,1,'#c9d1dc',x+w-24+k*5,y+h/2-2,z-3.2,{shadow:false})));
+    g.add(C(4,4,12,'#3a4252',x+w-30,y+h-9,z-12), C(4,4,12,'#3a4252',x+w-8,y+h-9,z-12), C(26,4,4,'#3a4252',x+w-30,y+h-9,z-14));
+    const pled = C(4,3,1,'#3ddc84',x+w-14,y+5,z-1,{em:'#3ddc84',ei:1.3});
+    pled.userData.isLed = true;
+    g.add(pled);
+    g.userData.inlet = new T.Vector3(x+w-18, y+h/2, z-3);
+    g.userData.pull = {axis:'z', dist:-150};
+    return g;
+  }
+  function trace(pts, y){
+    const geo = new T.BufferGeometry().setFromPoints(pts.map(([x,z]) => new T.Vector3(x,y,z)));
+    return new T.Line(geo, new T.LineBasicMaterial({color:0xd9b54a, transparent:true, opacity:.9}));
+  }
+  function dashed(a, b, color){
+    const geo = new T.BufferGeometry().setFromPoints([new T.Vector3(...a), new T.Vector3(...b)]);
+    const l = new T.Line(geo, new T.LineDashedMaterial({color, dashSize:6, gapSize:5, transparent:true, opacity:.85}));
+    l.computeLineDistances();
+    return l;
+  }
+  function tmmPlate(x,y,z,w,d,cols,rows){
+    const g = G('tmm', C(w,2,d,'#8b7cf6',x,y,z,{opacity:.62, em:'#7c6cf8', ei:.75, shadow:false}));
+    const cw = (w - 4)/cols - 3, cd = (d - 4)/rows - 3;
+    for(let r = 0; r < rows; r++) for(let c = 0; c < cols; c++)
+      g.add(C(cw,.6,cd,'#d2cbff',x+3.5+c*(cw+3),y+2,z+3.5+r*(cd+3),{opacity:.6, em:'#b9adff', ei:.35, shadow:false}));
+    const e = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(w,2,d)), new T.LineBasicMaterial({color:0xc4baff}));
+    e.position.set(x + w/2, y + 1, z + d/2); g.add(e);
+    return g;
+  }
+  function arrow(){
+    const g = new T.Group();
+    const m = mat('#7dd3fc',{opacity:.55, em:'#38bdf8', ei:.6});
+    const shaft = new T.Mesh(new T.CylinderGeometry(2.2,2.2,40,10), m); shaft.rotation.x = Math.PI/2; g.add(shaft);
+    const head = new T.Mesh(new T.ConeGeometry(6,14,14), m); head.rotation.x = -Math.PI/2; head.position.z = -26; g.add(head);
+    return g;
+  }
+  function label(id, text, obj, off, opt={}){
+    const el = document.createElement('div');
+    el.className = 'lbl ' + (opt.cls || '');
+    const s = document.createElement('span'); s.textContent = text; el.appendChild(s);
+    s.addEventListener('click', e => {
+      e.stopPropagation();
+      if(opt.action){ opt.action(); return; }
+      const t = opt.target || findById(id);
+      if(t) focusPart(t);
+    });
+    labelLayer.appendChild(el);
+    cur.labels.push({el, id, obj, off:new T.Vector3(...off), opt});
+  }
+
+  // ======================= 1U APPLIANCE =======================
+  function buildAppliance(p){
+    const root = cur.root;
+    const W = 440, H = 44, D = 620, X0 = -220, ZB = -310, ZF = 310;
+    cur.H = H; cur.ZF = ZF; cur.ZB = ZB;
+    const metal = '#dde2e9';
+
+    root.add(G('chassis', C(W,2,D,metal,X0,0,ZB,{m:.5,r:.45}), C(2,H,D,metal,X0,0,ZB,{m:.5}), C(2,H,D,metal,X0+W-2,0,ZB,{m:.5}),
+      C(W-216,H,2,metal,X0+216,0,ZB,{m:.5})));
+    const rearVents = G('chassis');
+    for(let k = 0; k < 14; k++) rearVents.add(C(6,26,1,'#4a5568',X0+226+k*14,9,ZB-.8,{shadow:false}));
+    root.add(rearVents);
+
+    root.add(G('frontPanel', C(W-4,H,3,'#232a38',X0+2,0,ZF-3)));
+    root.add(G('ears', C(24,H,3,'#3a4252',X0-24,0,ZF-3), C(24,H,3,'#3a4252',X0+W,0,ZF-3)));
+    [[X0-12,11],[X0-12,33],[X0+W+12,11],[X0+W+12,33]].forEach(([x,y]) => root.add(screw(x,y,ZF+.5,'z','earScrew')));
+
+    // main board
+    root.add(G('board', C(400,2,430,'#2e7a48',-200,3,-130,{r:.7})));
+    [[-192,-122],[192,-122],[-192,292],[192,292],[0,10]].forEach(([x,z]) => root.add(screw(x,6,z,'y','boardScrew')));
+    const T5 = 5.3;
+    [
+      [[-60,110],[-60,175],[-150,175],[-150,200]],
+      [[-30,110],[40,110],[40,85]],
+      [[-60,140],[-60,190],[10,190],[10,200]],
+      [[-60,80],[-60,40],[150,40]],
+      [[-150,260],[-150,298]], [[-130,260],[-60,298]], [[-125,240],[30,298]], [[-120,225],[110,298]], [[-120,210],[190,298]],
+      [[-90,90],[-120,-80],[-110,-80]],
+    ].forEach(pts => root.add(trace(pts, T5)));
+
+    // switch ASIC + small heatsink
+    const sw = G('switch', C(60,3,60,'#cfd6df',-180,5,200,{m:.6,r:.35}));
+    for(let i = 0; i < 7; i++) sw.add(C(2.5,9,46,'#c9d1dc',-172+i*7,8,207,{m:.85,r:.25}));
+    root.add(sw);
+    // FPGA / HSB+DAG
+    root.add(G('hsb', C(60,3,60,'#f3f5f8',-90,5,80,{r:.4}), Cyl(9,1.4,'#d9b54a',-60,8.7,110,'y',{m:.8,r:.3})));
+    // crypto offload
+    const cr = G('crypto', C(40,3,40,'#1b2130',-10,5,200));
+    for(let i = 0; i < 5; i++) cr.add(C(2.5,8,34,'#c9d1dc',-7+i*7.5,8,203,{m:.85,r:.25}));
+    root.add(cr);
+    // CPU + heatsink
+    const cpu = G('cpu', C(90,3,90,'#8e9ab0',40,5,40,{m:.6}), C(84,5,84,'#c9d1dc',43,8,43,{m:.8,r:.3}));
+    for(let i = 0; i < 12; i++) cpu.add(C(2.5,24,84,'#d5dce6',44+i*7,13,43,{m:.85,r:.25}));
+    root.add(cpu);
+    // VRM caps around CPU
+    const vrm = G('vrm');
+    for(let i = 0; i < 6; i++) vrm.add(Cyl(3.2,8,'#1b2130',48+i*14,9,30,'y'), C(8,3,6,'#3a4252',44+i*14,5,140));
+    root.add(vrm);
+    // RAM
+    const ram = G('ram');
+    for(let i = 0; i < 4; i++){
+      const x = 150 + i*11;
+      ram.add(C(4,30,130,'#1f2c4a',x,5,20), C(4.2,2,130,'#d9b54a',x-.1,5,20,{m:.8}));
+      [30,62,94,126].forEach(z => ram.add(C(4.6,9,16,'#0f1626',x-.3,15,z)));
+      ram.add(C(6,8,4,'#e6eaf0',x-1,5,14), C(6,8,4,'#e6eaf0',x-1,5,152));
+    }
+    root.add(ram);
+    // SSD (M.2) with its screw
+    const ssd = G('ssd', C(22,1.5,80,'#2b3550',-170,5,-60), C(16,1.2,20,'#11151d',-167,6.5,-50), C(16,1.2,24,'#11151d',-167,6.5,-24));
+    ssd.add(screw(-159,7,24,'y','boardScrew'));
+    root.add(ssd);
+    root.add(G('aom', C(26,3,26,'#1b2130',-110,5,-100), C(6,1,6,'#5d6879',-101,8,-91)));
+    root.add(G('battery', Cyl(10,3,'#c9d1dc',-40,6.5,-90,'y',{m:.9,r:.25}), Cyl(10.8,1,'#2a3140',-40,5,-90)));
+
+    // fans (inside, behind board)
+    for(let i = 0; i < 5; i++){
+      const f = fanModule(-190 + i*80, 2, -196, 40, 'fans');
+      f.userData.pull = {axis:'y', dist:70, outText:'Put back', inText:'Lift out'};
+      root.add(f); cur.fans.push(f);
+    }
+    // PSUs (back left)
+    const psus = [0,1].map(i => { const g = psu(-216 + i*104, 2, ZB, 100, 40, 110); root.add(g); return g; });
+
+    // front I/O
+    const Y = 14;
+    p.ports.forEach(pt => {
+      if(pt.id === 'mgmt') root.add(rj45('mgmt',-206,Y,ZF,true));
+      if(pt.id === 'console') root.add(rj45('console',-188,Y,ZF,false));
+      if(pt.id === 'ha') root.add(rj45('ha',-170,Y,ZF,false));
+      if(pt.id === 'usb') root.add(G('usb', C(12,6,3,'#2a3b66',-151,Y+3,ZF), C(8,2.5,1,'#05070b',-149,Y+4.7,ZF+2.6,{shadow:false})));
+      if(pt.id === 'lcd') root.add(G('lcd', C(46,26,3,'#10262c',-134,9,ZF), C(40,20,1,'#22d3c5',-131,12,ZF+2.6,{em:'#22d3c5',ei:.9})));
+    });
+    p.leds.forEach((l,i) => root.add(G(l.id, led(-80 + i*9, 34, ZF+1.5, l.color))));
+    const fixed = ['mgmt','console','ha','usb','lcd'];
+    const data = p.ports.filter(x => !fixed.includes(x.id));
+    const counts = data.map(x => { const m = (x.sub||'').match(/(\d+)\s*×/); return m ? +m[1] : 2; });
+    const total = counts.reduce((a,b) => a+b, 0);
+    const xs = -50, span = 262;
+    const cw = Math.min(22, (span - 6*data.length)/total - 3);
+    let x = xs;
+    data.forEach((pt,gi) => {
+      const g = G(pt.id);
+      for(let k = 0; k < counts[gi]; k++){ cage(g, x, 12, ZF, cw, 16); x += cw + 3; }
+      x += 6;
+      root.add(g);
+    });
+
+    // bezel (starts removed, lying in front)
+    const bz = G('bezel', C(400,36,6,'#1f2738',-200,4,ZF+5));
+    for(let k = 0; k < 25; k++) bz.add(C(8,24,1,'#33405a',-190+k*15.5,10,ZF+11,{shadow:false}));
+    bz.position.z = 100;
+    bz.userData.pull = {axis:'z', dist:-100, outText:'Remove bezel', inText:'Attach bezel'};
+    root.add(bz);
+
+    // lid + screws
+    const lid = G('lid', C(W,2,D,'#e3e8ef',X0,H,ZB,{m:.5,r:.45}));
+    for(let k = 0; k < 12; k++) lid.add(C(14,.6,110,'#c5ccd7',X0+40+k*28,H+2,ZB+20,{shadow:false}));
+    lid.add(C(70,.6,26,'#ff8c1a',X0+20,H+2,ZF-50,{em:'#ff8c1a',ei:.25,shadow:false}));
+    root.add(lid); cur.lid = lid;
+    [[X0+9,ZB+30],[X0+9,0],[X0+9,ZF-30],[X0+W-9,ZB+30],[X0+W-9,0],[X0+W-9,ZF-30],[0,ZB+9]].forEach(([sx,sz]) => {
+      const s = screw(sx,H+3,sz,'y','lidScrew'); root.add(s); cur.screws.push(s);
+    });
+
+    // floating TMM layers + shared table
+    const tmm = new T.Group(); tmm.visible = false;
+    const plates = [];
+    for(let i = 0; i < 4; i++){
+      const px = -178 + i*90, pz = -60;
+      tmm.add(dashed([px+40,0,pz+50],[85,37-110,85],0x8b7cf6));
+      const pl = tmmPlate(px,0,pz,80,100,3,3); tmm.add(pl); plates.push(pl);
+    }
+    tmm.add(dashed([0,-8,52],[-60,9-110,110],0xf2c14e));
+    const shared = G('sharedTable', C(356,4,14,'#f2c14e',-178,-10,45,{opacity:.92, em:'#f2c14e', ei:.25, shadow:false}));
+    tmm.add(shared);
+    tmm.position.y = 110; cur.tmmY = 110;
+    root.add(tmm); cur.tmm = tmm;
+
+    // airflow arrows
+    const air = new T.Group(); air.visible = false;
+    for(let i = 0; i < 5; i++) for(let k = 0; k < 3; k++){
+      const a = arrow(); a.position.set(-160 + i*80, 24, 0); a.userData.phase = k/3; air.add(a);
+    }
+    air.userData.z0 = ZF + 60; air.userData.z1 = ZB - 60;
+    root.add(air); cur.air = air;
+
+    // labels
+    label('lid','Top cover — tap a screw',lid,[0,H+4,-60],{closed:true, cls:'cta', action:() => select(cur.screws[0])});
+    label('mgmt','MGMT · Console · HA · USB',root,[-180,28,ZF+2]);
+    label('lcd','LCD + LEDs',root,[-100,37,ZF+2]);
+    label(data[0].id,'Data ports (' + data.map(d => d.label.replace(' ports','')).join(' + ') + ')',root,[80,30,ZF+2]);
+    label('bezel','Front bezel',bz,[0,42,ZF+8]);
+    label('ears','Rack ear',root,[X0+W+12,46,ZF]);
+    label('psu','Power supplies ×2',psus[0],[-166,44,ZB+55]);
+    label('cpu','CPU + heatsink',root,[85,38,85],{inside:true});
+    label('ram','RAM (DIMMs)',root,[172,36,150],{inside:true});
+    label('switch','Switch ASIC',root,[-150,18,230],{inside:true});
+    label('hsb',p.internal.find(x => x.id === 'hsb').label,root,[-60,10,110],{inside:true});
+    label('crypto','SSL / crypto offload',root,[10,17,220],{inside:true});
+    label('ssd','SSD (M.2)',root,[-159,8,-30],{inside:true});
+    label('aom','Mgmt controller (AOM)',root,[-97,9,-87],{inside:true, minor:true});
+    label('battery','RTC battery',root,[-40,8,-90],{inside:true, minor:true});
+    label('vrm','Voltage regulators',root,[90,14,30],{inside:true, minor:true});
+    label('fans','Fan modules',cur.fans[2],[10,44,-178],{inside:true});
+    plates.forEach((pl,i) => label('tmm','tmm-' + i,pl,[-178+i*90+40,4,-60],{inside:true, cls:'tmm', target:pl}));
+    label('sharedTable','shared table',shared,[-150,-6,52],{inside:true, cls:'gold'});
+  }
+
+  // ======================= VELOS CX410 =======================
+  function buildVelos(p){
+    const root = cur.root;
+    const W = 440, H = 176, D = 560, X0 = -220, ZB = -280, ZF = 280;
+    cur.H = H; cur.ZF = ZF; cur.ZB = ZB;
+    const metal = '#dde2e9';
+
+    root.add(G('chassis', C(W,3,D,metal,X0,0,ZB,{m:.5,r:.45}), C(3,H,D,metal,X0,0,ZB,{m:.5}), C(3,H,D,metal,X0+W-3,0,ZB,{m:.5}),
+      C(W,6,3,metal,X0,H-6,ZB), C(W,7,3,'#232a38',X0,H-7,ZF-3), C(W,5,3,'#232a38',X0,0,ZF-3)));
+    root.add(G('ears', C(24,H,3,'#3a4252',X0-24,0,ZF-3), C(24,H,3,'#3a4252',X0+W,0,ZF-3)));
+    [20,60,116,156].forEach(y => { root.add(screw(X0-12,y,ZF+.5,'z','earScrew')); root.add(screw(X0+W+12,y,ZF+.5,'z','earScrew')); });
+
+    // backplane
+    const fab = G('fabric', C(430,166,6,'#c9a64a',-215,5,-12,{m:.4,r:.5}));
+    const slotXs = [...Array(8)].map((_,i) => -214 + i*40).concat([110,162]);
+    slotXs.forEach(sx => fab.add(C(16,90,4,'#5a4a1e',sx+12,40,-6)));
+    root.add(fab);
+
+    // blades
+    const blades = [];
+    for(let i = 0; i < 8; i++){
+      const x = -214 + i*40;
+      const g = G('blade');
+      g.userData.slot = i + 1;
+      g.userData.pull = {axis:'z', dist:210};
+      g.add(C(38,164,4,'#2b3346',x,6,ZF-4));
+      const q = G('qsfp28');
+      for(let k = 0; k < 4; k++) cage(q, x+6, 28+k*28, ZF, 26, 16);
+      g.add(q);
+      g.add(led(x+19,145,ZF+1,'#3ddc84'));
+      g.add(C(28,5,8,'#5d6879',x+5,155,ZF), C(4,12,8,'#5d6879',x+5,148,ZF));
+      g.add(C(3,150,278,'#2e7a48',x+20,12,-4,{r:.7}));
+      g.add(C(14,70,90,'#c9d1dc',x+6,50,120,{m:.8,r:.3}));
+      for(let f = 0; f < 6; f++) g.add(C(14.4,2,90,'#aab4c2',x+5.8,54+f*11,120,{m:.85}));
+      g.add(C(12,30,40,'#1b2130',x+8,20,30), C(4,40,70,'#1f2c4a',x+16,112,40));
+      root.add(g); blades.push(g);
+    }
+    // controllers
+    const ctrls = [];
+    [0,1].forEach(j => {
+      const x = 110 + j*52;
+      const g = G('controller');
+      g.userData.slot = j === 0 ? 'A' : 'B';
+      g.userData.pull = {axis:'z', dist:210};
+      g.add(C(50,164,4,'#2b3346',x,6,ZF-4));
+      g.add(G('lcd', C(42,32,2,'#10262c',x+4,118,ZF), C(36,26,1,'#22d3c5',x+7,121,ZF+2,{em:'#22d3c5',ei:.9})));
+      g.add(G('status', led(x+10,108,ZF+1,'#3ddc84')), G('alarm', led(x+20,108,ZF+1,'#555555')));
+      g.add(rj45('mgmt',x+6,80,ZF,true), rj45('console',x+28,80,ZF,false));
+      g.add(G('usb', C(14,7,3,'#2a3b66',x+10,60,ZF), C(10,3,1,'#05070b',x+12,62,ZF+2.6,{shadow:false})));
+      g.add(C(36,5,8,'#5d6879',x+7,155,ZF));
+      g.add(C(3,150,278,'#2e7a48',x+32,12,-4,{r:.7}));
+      g.add(C(20,50,80,'#c9d1dc',x+10,40,100,{m:.8,r:.3}), C(6,30,60,'#2b3550',x+24,100,40));
+      root.add(g); ctrls.push(g);
+    });
+
+    // fan trays (back, top)
+    const trays = [];
+    for(let i = 0; i < 3; i++){
+      const x = -212 + i*142;
+      const g = G('fans', C(138,4,58,'#2a3140',x,62,ZB), C(138,4,58,'#2a3140',x,170,ZB), C(4,112,58,'#2a3140',x,62,ZB), C(4,112,58,'#2a3140',x+134,62,ZB));
+      g.add(fanModule(x+8,78,ZB+2,60,'fans'), fanModule(x+70,78,ZB+2,60,'fans'));
+      g.userData.pull = {axis:'z', dist:-140};
+      root.add(g); trays.push(g);
+    }
+    // PSUs (back, bottom)
+    const psus = [];
+    for(let i = 0; i < 4; i++){ const g = psu(-214 + i*107, 3, ZB, 100, 55, 120); root.add(g); psus.push(g); }
+
+    // lid + screws
+    const lid = G('lid', C(W,2,D,'#e3e8ef',X0,H,ZB,{m:.5,r:.45}));
+    for(let k = 0; k < 12; k++) lid.add(C(14,.6,100,'#c5ccd7',X0+40+k*30,H+2,ZB+30,{shadow:false}));
+    lid.add(C(70,.6,26,'#ff8c1a',X0+20,H+2,ZF-50,{em:'#ff8c1a',ei:.25,shadow:false}));
+    root.add(lid); cur.lid = lid;
+    [[X0+9,ZB+30],[X0+9,0],[X0+9,ZF-30],[X0+W-9,ZB+30],[X0+W-9,0],[X0+W-9,ZF-30],[-80,ZB+9],[80,ZB+9]].forEach(([sx,sz]) => {
+      const s = screw(sx,H+3,sz,'y','lidScrew'); root.add(s); cur.screws.push(s);
+    });
+
+    // TMM per blade
+    const tmm = new T.Group(); tmm.visible = false;
+    const TY = H + 80;
+    const plates = [];
+    for(let i = 0; i < 8; i++){
+      const x = -214 + i*40;
+      tmm.add(dashed([x+19,0,165],[x+13,120-TY,165],0x8b7cf6));
+      const pl = tmmPlate(x+2,0,100,34,130,2,4); tmm.add(pl); plates.push(pl);
+    }
+    tmm.position.y = TY; cur.tmmY = TY;
+    root.add(tmm); cur.tmm = tmm;
+
+    const air = new T.Group(); air.visible = false;
+    for(let i = 0; i < 5; i++) for(let r = 0; r < 2; r++) for(let k = 0; k < 3; k++){
+      const a = arrow(); a.position.set(-170 + i*85, 50 + r*70, 0); a.userData.phase = k/3; air.add(a);
+    }
+    air.userData.z0 = ZF + 60; air.userData.z1 = ZB - 60;
+    root.add(air); cur.air = air;
+
+    label('lid','Top cover — tap a screw',lid,[0,H+4,-40],{closed:true, cls:'cta', action:() => select(cur.screws[0])});
+    label('blade','BX110 blades ×8',blades[3],[-74,170,ZF],{target:blades[3]});
+    label('controller','SX410 controllers ×2',ctrls[0],[160,170,ZF],{target:ctrls[0]});
+    label('lcd','LCD + LEDs',ctrls[1],[183,152,ZF+2]);
+    label('qsfp28','QSFP28 ports',blades[1],[-161,90,ZF+3]);
+    label('ears','Rack ear',root,[X0-12,H+2,ZF]);
+    label('fans','Fan trays',trays[1],[0,176,ZB+30],{target:trays[1]});
+    label('psu','Power supplies ×4',psus[0],[-164,60,ZB+60]);
+    label('fabric','Backplane (chassis fabric)',fab,[0,172,-9],{inside:true});
+    label('tmm','TMMs — one set per blade',plates[3],[-74,4,100],{inside:true, cls:'tmm', target:plates[3]});
+  }
+
+  // ======================= SCENE BUILD / SWITCH =======================
+  function disposeCur(){
+    if(!cur) return;
+    scene.remove(cur.root);
+    cur.root.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); });
+    cur.labels.forEach(l => l.el.remove());
+  }
+  function build(){
+    tweens.length = 0;
+    focus = null;
+    if(flowTimer) clearTimeout(flowTimer);
+    flowTimer = null; flow = null;
+    if(quizTimer) clearTimeout(quizTimer);
+    quizTimer = null; quiz = null;
+    $('quizCard').classList.remove('show');
+    if(fault) fault.timers.forEach(clearTimeout);
+    fault = null; cable = null;
+    $('faultCard').classList.remove('show');
+    $('cableCard').classList.remove('show');
+    $('flowCard').classList.remove('show');
+    $('pktTag').style.display = 'none';
+    viewShift = 0; viewShiftY = 0; appliedShift = null;
+    $('focusCard').classList.remove('show');
+    disposeCur();
+    selected = null;
+    state.open = false;
+    cur = {root:new T.Group(), rotors:[], blink:[], screws:[], fans:[], labels:[], lid:null, tmm:null, air:null, tmmY:0};
+    scene.add(cur.root);
+    const p = platforms[pid];
+    if(pid === 'velos') buildVelos(p); else buildAppliance(p);
+    cur.air.visible = state.air;
+    fit();
+    setView('iso', true);
+    renderUI();
+  }
+
+  // ======================= CAMERA =======================
+  const target = new T.Vector3();
+  let theta = .65, phi = .95, radius = 1200, baseRadius = 1200;
+  function updateCamera(){
+    camera.position.set(
+      target.x + radius*Math.sin(phi)*Math.sin(theta),
+      target.y + radius*Math.cos(phi),
+      target.z + radius*Math.sin(phi)*Math.cos(theta));
+    camera.lookAt(target);
+  }
+  function computeFit(withTmm){
+    const box = new T.Box3();
+    cur.root.children.forEach(c => {
+      if(c === cur.air || (c === cur.tmm && !withTmm) || (flow && c === flow.group)) return;
+      box.expandByObject(c);
+    });
+    const sph = box.getBoundingSphere(new T.Sphere());
+    const vf = camera.fov*Math.PI/180;
+    const hf = 2*Math.atan(Math.tan(vf/2)*camera.aspect);
+    return {center:sph.center, rad:sph.radius, r:sph.radius/Math.sin(Math.min(vf,hf)/2)*1.02};
+  }
+  function fit(){
+    cur.fit = computeFit();
+    target.copy(cur.fit.center);
+    baseRadius = cur.fit.r;
+    radius = baseRadius;
+  }
+  const VIEWS = {front:[0,1.38], back:[Math.PI,1.38], top:[0,.08], under:[.5,2.75], iso:[.65,.95]};
+  function setView(v, instant){
+    const [t2, p2] = VIEWS[v];
+    let t1 = theta % (2*Math.PI);
+    let dt = t2 - t1;
+    if(dt > Math.PI) dt -= 2*Math.PI;
+    if(dt < -Math.PI) dt += 2*Math.PI;
+    const p1 = phi, r1 = radius;
+    if(instant){ theta = t1 + dt; phi = p2; radius = baseRadius; return; }
+    const r2 = focus ? radius : baseRadius;
+    if(focus) focus.spin = false;
+    tween(700, e => { theta = t1 + dt*e; phi = p1 + (p2-p1)*e; radius = r1 + (r2 - r1)*e; }, null, 'cam');
+  }
+
+  // ======================= TWEENS =======================
+  const tweens = [];
+  const ease = k => k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2)/2;
+  function tween(dur, fn, done, tag){
+    if(tag) for(let i = tweens.length - 1; i >= 0; i--) if(tweens[i].tag === tag) tweens.splice(i,1);
+    tweens.push({t0:performance.now(), dur, fn, done, tag});
+  }
+  function runTweens(now){
+    for(let i = tweens.length - 1; i >= 0; i--){
+      const t = tweens[i];
+      const k = Math.min(1, (now - t.t0)/t.dur);
+      t.fn(ease(k));
+      if(k >= 1){ tweens.splice(i,1); t.done && t.done(); }
+    }
+  }
+
+  // ======================= LID / SCREWS / PULL =======================
+  function unscrew(s, delay, cb){
+    if(s.userData.removed || s.userData.busy){ cb && cb(); return; }
+    s.userData.busy = true;
+    setTimeout(() => {
+      const y0 = s.userData.y0;
+      tween(650, e => { s.rotation.y = e*Math.PI*8; s.position.y = y0 + e*24; }, () => {
+        s.visible = false; s.userData.removed = true; s.userData.busy = false; cb && cb();
+      });
+    }, delay);
+  }
+  function screwsLeft(){ return cur.screws.filter(s => !s.userData.removed).length; }
+  function afterScrew(){
+    if(selected && selected.userData.id === 'lidScrew') showInfo(selected);
+    if(screwsLeft() === 0 && !state.open) openLid();
+  }
+  function setLidOpacity(o){
+    cur.lid.traverse(m => { if(m.isMesh){ m.material.transparent = o < 1; m.material.opacity = o; m.material.depthWrite = o >= 1; } });
+  }
+  function openLid(){
+    state.open = true; renderUI();
+    const lid = cur.lid;
+    tween(1100, e => { lid.position.y = e*190; lid.position.z = -e*80; lid.rotation.x = -e*.3; setLidOpacity(1 - e*.95); }, () => {
+      lid.visible = false;
+      const tm = cur.tmm; tm.visible = true; tm.scale.setScalar(.01);
+      tween(800, e => tm.scale.setScalar(Math.max(.01, e)));
+    });
+  }
+  function openChassis(){
+    if(focus) exitFocus();
+    if(state.open) return;
+    const left = cur.screws.filter(s => !s.userData.removed);
+    left.forEach((s,i) => unscrew(s, i*150, afterScrew));
+  }
+  function closeChassis(){
+    if(focus) exitFocus();
+    if(flow) stopFlow();
+    if(quiz) stopQuiz();
+    if(fault) stopFault();
+    if(!state.open) return;
+    state.open = false; renderUI();
+    cur.tmm.visible = false;
+    const lid = cur.lid;
+    lid.visible = true;
+    tween(1000, e => { lid.position.y = (1-e)*190; lid.position.z = -(1-e)*80; lid.rotation.x = -(1-e)*.3; setLidOpacity(.05 + e*.95); }, () => {
+      setLidOpacity(1);
+      cur.screws.forEach((s,i) => {
+        s.visible = true; s.userData.removed = false;
+        const y0 = s.userData.y0;
+        setTimeout(() => tween(500, e => { s.position.y = y0 + (1-e)*24; s.rotation.y = (1-e)*Math.PI*8; }), i*90);
+      });
+    });
+  }
+  function findPullable(o){ while(o && o !== cur.root){ if(o.userData.pull) return o; o = o.parent; } return null; }
+  function togglePull(g){
+    const pl = g.userData.pull;
+    g.userData.base ??= g.position[pl.axis];
+    const out = !g.userData.out;
+    g.userData.out = out;
+    const from = g.position[pl.axis], to = g.userData.base + (out ? pl.dist : 0);
+    tween(650, e => { g.position[pl.axis] = from + (to - from)*e; }, () => { if(selected) showInfo(selected); }, 'pull:' + g.uuid);
+  }
+
+  // ======================= SELECTION / INFO =======================
+  let selected = null;
+  function highlight(obj, on, hex = 0xff8c1a, ei = .45){
+    obj.traverse(m => {
+      if(!m.isMesh || !m.material.emissive) return;
+      if(on){
+        if(m.userData.e0 === undefined){ m.userData.e0 = m.material.emissive.getHex(); m.userData.ei0 = m.material.emissiveIntensity; }
+        m.material.emissive.setHex(hex); m.material.emissiveIntensity = ei;
+      } else if(m.userData.e0 !== undefined){
+        m.material.emissive.setHex(m.userData.e0); m.material.emissiveIntensity = m.userData.ei0;
+      }
+    });
+  }
+  function select(obj){
+    if(selected) highlight(selected, false);
+    selected = obj;
+    if(obj) highlight(obj, true);
+    showInfo(obj);
+    syncSel(obj && obj.userData.id);
+  }
+  function syncSel(id){
+    document.querySelectorAll('#parts .chip').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
+    cur.labels.forEach(l => l.el.classList.toggle('sel', l.id === id));
+  }
+  function defaultInfo(){
+    $('infoTitle').textContent = 'Tap any part';
+    $('infoText').textContent = 'Tap a part on the model (or a name below): it lifts out of the box, everything else fades, and a full explanation opens. Drag to rotate 360°. Tap a cover screw to unscrew it.';
+    $('infoActs').innerHTML = '';
+  }
+  function btn(text, fn, primary){
+    const b = document.createElement('button');
+    b.className = 'btn' + (primary ? ' primary' : '');
+    b.textContent = text; b.onclick = fn;
+    return b;
+  }
+  function showInfo(obj){
+    const acts = $('infoActs'); acts.innerHTML = '';
+    if(!obj){ return; }
+    const id = obj.userData.id;
+    const info = lookup(id, obj);
+    $('infoTitle').textContent = info.label;
+    let text = focus ? info.tip.replace(/\s*Tap "Pull out"[^.]*\./, '') : info.tip;
+    if(id === 'lidScrew'){
+      const n = screwsLeft();
+      text += n ? `  (${n} cover screw${n > 1 ? 's' : ''} still in.)` : '  (All screws are out.)';
+      if(!obj.userData.removed) acts.appendChild(btn('Unscrew this one', () => unscrew(obj, 0, afterScrew), true));
+      if(n) acts.appendChild(btn('Unscrew all & open', openChassis));
+    }
+    if(id === 'lid') acts.appendChild(state.open ? btn('Close chassis', closeChassis, true) : btn('Unscrew all & open', openChassis, true));
+    const pg = findPullable(obj);
+    if(pg && !focus){
+      const pl = pg.userData.pull;
+      const t = pg.userData.out ? (pl.outText || 'Push back in') : (pl.inText || 'Pull out');
+      acts.appendChild(btn(t, () => togglePull(pg), true));
+    }
+    $('infoText').textContent = text;
+  }
+  function findById(id){
+    let found = null;
+    cur.root.traverse(o => { if(!found && o.userData.id === id) found = o; });
+    return found;
+  }
+
+  // ======================= FOCUS MODE =======================
+  let focus = null;
+  let viewShift = 0, viewShiftY = 0, appliedShift = null;
+  const wide = () => stage.clientWidth > 760;
+  function isUnder(o, anc){ while(o){ if(o === anc) return true; o = o.parent; } return false; }
+
+  function fadeAllExcept(keepObj){
+    const keep = new Set(); keepObj.traverse(m => keep.add(m));
+    cur.root.traverse(m => {
+      if(!m.material || keep.has(m)) return;
+      const mt = m.material;
+      if(m.userData.f0 === undefined) m.userData.f0 = {op:mt.opacity, tr:mt.transparent, dw:mt.depthWrite, cs:m.castShadow};
+      mt.transparent = true; mt.opacity = m.userData.f0.op*.1; mt.depthWrite = false; m.castShadow = false;
+    });
+  }
+  function unfadeAll(){
+    cur.root.traverse(m => {
+      const f = m.userData.f0; if(!f) return;
+      m.material.opacity = f.op; m.material.transparent = f.tr; m.material.depthWrite = f.dw; m.castShadow = f.cs;
+      delete m.userData.f0;
+    });
+  }
+
+  // Direction a part separates in: front parts slide forward, back parts slide back, inside parts rise out of the box.
+  function liftVector(obj){
+    if(obj.userData.id === 'chassis') return {dy:0, dz:0, view:'iso'};
+    if(isUnder(obj, cur.tmm)) return {dy:45, dz:0, view:'iso'};
+    const box = new T.Box3().setFromObject(obj);
+    if(box.min.z > cur.ZF - 15) return {dy:15, dz:110, view:'front'};
+    const pl = obj.userData.pull;
+    if(pl && pl.axis === 'z'){
+      const dz = obj.userData.out ? 0 : pl.dist;
+      return {dy:obj.userData.out ? 30 : 20, dz, view:dz > 0 ? 'front' : dz < 0 ? 'back' : 'iso'};
+    }
+    if(box.max.z < cur.ZB + 130) return {dy:15, dz:-120, view:'back'};
+    return {dy:Math.max(30, cur.H + 45 - box.min.y), dz:0, view:'iso'};
+  }
+
+  function focusRadius(r, sx, sy, m = 1.7, min = 170){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const tv = Math.tan(camera.fov*Math.PI/360);
+    const ew = Math.max(220, w - 2*sx), eh = Math.max(160, h - 2*sy);
+    const a = Math.min(2*Math.atan(tv*eh/h), 2*Math.atan(tv*ew/h));
+    return Math.max(min, r/Math.sin(a/2)*m);
+  }
+  function camTween(toT, toR, toTh, toPh, dur){
+    const t0 = target.clone(), r0 = radius, th0 = theta, p0 = phi;
+    const d = ((toTh - th0) % (2*Math.PI) + 3*Math.PI) % (2*Math.PI) - Math.PI;
+    tween(dur, e => { target.lerpVectors(t0, toT, e); radius = r0 + (toR - r0)*e; theta = th0 + d*e; phi = p0 + (toPh - p0)*e; }, null, 'cam');
+  }
+  function shiftTo(sx1, sy1, dur){
+    const sx0 = viewShift, sy0 = viewShiftY;
+    tween(dur, e => { viewShift = sx0 + (sx1 - sx0)*e; viewShiftY = sy0 + (sy1 - sy0)*e; }, null, 'shift');
+  }
+  function applyShift(){
+    const key = viewShift.toFixed(1) + ',' + viewShiftY.toFixed(1);
+    if(key === appliedShift) return;
+    appliedShift = key;
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if(Math.abs(viewShift) < .5 && Math.abs(viewShiftY) < .5) camera.clearViewOffset();
+    else camera.setViewOffset(w, h, -viewShift, viewShiftY, w, h);
+  }
+
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const fmt = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+  const learnFor = id => (pid === 'velos' && LEARN_V[id]) || LEARN[id];
+  const focusOrder = () => partsGroups(platforms[pid]).flatMap(g => g[1]).filter(id => id !== 'lid' && id !== 'lidScrew');
+
+  function renderFocusCard(obj){
+    const id = obj.userData.id, info = lookup(id, obj), L = learnFor(id);
+    const order = focusOrder(), i = order.indexOf(id);
+    $('fcTag').textContent = (i >= 0 ? `Part ${i+1} of ${order.length} · ` : '') + platforms[pid].label;
+    $('fcTitle').textContent = info.label;
+    const sec = (h, t) => `<div class="fc-h">${h}</div><p class="fc-p">${fmt(t)}</p>`;
+    const model = (info.tip || '').replace(/\s*Tap "Pull out"[^.]*\./, '');
+    let html = '';
+    if(L){
+      html += sec('What is it?', L.what) + sec('Why does F5 need it?', L.why) + sec('How it works in F5', L.how);
+      if(model && model !== L.what) html += sec('On this model', model);
+      if(L.tip) html += `<div class="fc-tip"><b>Trainer tip:</b> ${fmt(L.tip)}</div>`;
+    } else {
+      html += sec('What is it?', model);
+    }
+    $('fcBody').innerHTML = html;
+    $('focusCard').classList.add('show');
+    $('focusCard').scrollTop = 0;
+  }
+
+  function returnPart(f, done){
+    const from = f.obj.position.clone();
+    tween(650, e => f.obj.position.lerpVectors(from, f.pos0, e), done, 'pos:' + f.obj.uuid);
+  }
+
+  function focusPart(obj){
+    if(!obj) return;
+    if(flow) stopFlow();
+    if(quiz) stopQuiz();
+    if(fault) stopFault();
+    if(cable) stopCable();
+    const id = obj.userData.id;
+    if(id === 'lid' || id === 'lidScrew'){ if(focus) exitFocus(); select(obj); return; }
+    if(focus && focus.obj === obj) return;
+    if(focus) returnPart(focus);
+    if(selected) highlight(selected, false);
+    selected = obj;
+
+    if(isUnder(obj, cur.tmm)){ cur.tmm.visible = true; cur.tmm.scale.setScalar(1); }
+    cur.air.visible = false;
+    unfadeAll();
+    fadeAllExcept(obj);
+
+    const lv = liftVector(obj);
+    const pos0 = obj.position.clone();
+    const p1 = pos0.clone().add(new T.Vector3(0, lv.dy, lv.dz));
+    focus = {obj, pos0, spin:true};
+    tween(750, e => obj.position.lerpVectors(pos0, p1, e), null, 'pos:' + obj.uuid);
+
+    const sph = new T.Box3().setFromObject(obj).getBoundingSphere(new T.Sphere());
+    const c = sph.center.clone().add(new T.Vector3(0, lv.dy, lv.dz));
+    const sx1 = wide() ? 205 : 0, sy1 = wide() ? 0 : stage.clientHeight*.24;
+    shiftTo(sx1, sy1, 750);
+    const V = {iso:[.65,.9], front:[.45,1.2], back:[Math.PI + .45,1.15]}[lv.view];
+    camTween(c, focusRadius(sph.radius, sx1, sy1), V[0], V[1], 850);
+
+    renderFocusCard(obj);
+    showInfo(obj);
+    syncSel(id);
+  }
+
+  function exitFocus(){
+    if(!focus) return;
+    const f = focus;
+    focus = null;
+    returnPart(f, () => { if(!focus || !isUnder(focus.obj, cur.tmm)) cur.tmm.visible = state.open; });
+    unfadeAll();
+    cur.air.visible = state.air;
+    if(selected){ highlight(selected, false); selected = null; }
+    syncSel(null);
+    $('focusCard').classList.remove('show');
+    shiftTo(0, 0, 700);
+    const fc = cur.fit || computeFit();
+    baseRadius = fc.r;
+    camTween(fc.center, fc.r, .65, .95, 850);
+    defaultInfo();
+  }
+
+  // ======================= PACKET FLOW =======================
+  let flow = null, flowTimer = null;
+  const PKT_REQ = 0x5b8cff, PKT_RESP = 0x3ddc84;
+  const vec = a => new T.Vector3(a[0], a[1], a[2]);
+  const arr = v => [v.x, v.y, v.z];
+  const ctr = o => new T.Box3().setFromObject(o).getCenter(new T.Vector3());
+  function topOf(o){ const b = new T.Box3().setFromObject(o); const c = b.getCenter(new T.Vector3()); return [c.x, b.max.y + 6, c.z]; }
+  const tmmPlates = () => cur.tmm.children.filter(c => c.userData.id === 'tmm');
+
+  // 1U appliance: client → external port → switch → DAG → TMM → crypto → shared table → server → back.
+  function applianceSteps(p){
+    const fixed = ['mgmt','console','ha','usb','lcd'];
+    const data = p.ports.filter(x => !fixed.includes(x.id));
+    const ext = findById(data[0].id), inn = findById(data[1].id);
+    const extName = data[0].label.replace(' ports',''), innName = data[1].label.replace(' ports','');
+    const sw = findById('switch'), hsb = findById('hsb'), cpu = findById('cpu'), cry = findById('crypto'), sh = findById('sharedTable');
+    const pl = tmmPlates()[2];
+    const ZF = cur.ZF, Y = 9, F = 285;
+    const B = (x, z) => [x, Y, z];
+    const q = () => {
+      const s = ctr(sw), h = ctr(hsb), c = ctr(cpu);
+      return {ex:ctr(ext).x, ix:ctr(inn).x, s, h, c, sT:topOf(sw), hT:topOf(hsb), cT:topOf(cpu), kT:topOf(cry), pc:arr(ctr(pl)), sh:arr(ctr(sh))};
+    };
+    const tmmOut = (g, x) => [g.pc, g.cT, B(g.c.x, g.h.z), g.hT, B(g.s.x, g.h.z), g.sT, B(g.s.x, F), B(x, F), [x, Y, ZF-12], [x, 22, ZF+4], [x, 22, ZF+220]];
+    return [
+      {title:'1 · Packet arrives at a data port', dir:'req', hi:() => [ext],
+       hdr:'TCP SYN   203.0.113.10:51200 → 10.10.0.100:443',
+       text:`A user's browser sends a TCP SYN to the virtual server (VIP) 10.10.0.100:443. It enters through a ${extName} port on the external VLAN — the optic turns light into electrical signals.`,
+       pts:() => { const g = q(); return [[g.ex, 22, ZF+220], [g.ex, 22, ZF+4]]; }},
+      {title:'2 · Switch ASIC: VLAN and trunk', dir:'req', hi:() => [sw],
+       hdr:'VLAN external · trunk / LACP',
+       text:'Along the copper traces to the switch chip. It reads the VLAN tag, handles the trunk (LACP) and forwards the packet up to the disaggregator. Still pure hardware — no CPU used yet.',
+       pts:() => { const g = q(); return [[g.ex, 22, ZF+4], [g.ex, Y, ZF-12], B(g.ex, F), B(g.s.x, F), B(g.s.x, g.s.z), g.sT]; }},
+      {title:'3 · HSB / DAG picks a TMM', dir:'req', hi:() => [hsb],
+       hdr:'hash(src IP, src port, dst IP, dst port) → TMM-2',
+       text:'The DAG hashes the flow and picks TMM-2. Every later packet of this connection gives the same hash, so it always lands on TMM-2 — one connection, one TMM.',
+       pts:() => { const g = q(); return [g.sT, B(g.s.x, g.s.z), B(g.s.x, g.h.z), B(g.h.x, g.h.z), g.hT]; }},
+      {title:'4 · TMM-2 answers the client (full proxy)', dir:'req', hi:() => [cpu, pl],
+       hdr:'SYN-ACK   10.10.0.100:443 → 203.0.113.10:51200',
+       text:'TMM-2 runs on one CPU core. As a full proxy it completes the TCP handshake itself — the client’s connection ends here, on the F5. The server has not seen anything yet.',
+       pts:() => { const g = q(); return [g.hT, B(g.h.x, g.h.z), B(g.c.x, g.h.z), g.cT, g.pc]; }},
+      {title:'5 · SSL offload on the crypto chip', dir:'req', hi:() => [cry],
+       hdr:'TLS handshake → decrypt → GET /login',
+       text:'The client starts TLS. TMM hands the heavy crypto math to the crypto chip and gets the clear-text HTTP request back. Now TMM can read the URL, headers and cookies.',
+       pts:() => { const g = q(); return [g.pc, g.kT, g.pc]; }},
+      {title:'6 · Decision: iRules, persistence, LB', dir:'req', hi:() => [sh],
+       hdr:'persist? no → Round Robin → web-02 10.20.1.12:80',
+       text:'TMM runs any iRules, checks the shared persistence table (has this user been sent to a server before?) and, if not, picks a pool member with the load-balancing method — here round robin chooses web-02.',
+       pts:() => { const g = q(); return [g.pc, g.sh, g.pc]; }},
+      {title:'7 · New server-side connection', dir:'req', hi:() => [inn, hsb],
+       hdr:'SNAT 10.20.0.5:40012 → 10.20.1.12:80',
+       text:`TMM opens a brand-new TCP connection to web-02 from a SNAT address. It picks the source port so the reply will hash back to TMM-2. Out through the DAG, the switch and a ${innName} port on the internal VLAN.`,
+       pts:() => tmmOut(q(), q().ix)},
+      {title:'8 · The response comes back', dir:'resp', hi:() => [hsb, pl],
+       hdr:'HTTP 200 OK   10.20.1.12:80 → 10.20.0.5:40012',
+       text:'web-02 replies to the SNAT address. The switch passes it to the DAG, and the DAG hashes it straight back to TMM-2 — thanks to the source port TMM picked. Same TMM on both sides.',
+       pts:() => tmmOut(q(), q().ix).reverse()},
+      {title:'9 · Encrypt and send to the client', dir:'resp', hi:() => [cry, ext],
+       hdr:'10.10.0.100:443 → 203.0.113.10:51200  (TLS)',
+       text:'TMM rewrites the addresses (server → VIP), encrypts the response on the crypto chip and sends it out of the external port. The user gets the page — and never talked to the server directly.',
+       pts:() => { const g = q(); return [g.pc, g.kT].concat(tmmOut(g, g.ex)); }},
+    ];
+  }
+
+  // VELOS: blade 1 port → blade FPGA → tenant TMM → backplane → blade 3 port → server, and back.
+  function velosSteps(){
+    const blades = cur.root.children.filter(c => c.userData.id === 'blade');
+    const b0 = blades[0];
+    const q0 = b0.children.find(c => c.userData.id === 'qsfp28');
+    const fab = findById('fabric');
+    const pl = tmmPlates()[0];
+    const ZF = cur.ZF;
+    const bx = i => -214 + i*40 + 19;
+    const Fp = i => [bx(i) - 6, 85, 165];
+    const pc = () => arr(ctr(pl));
+    const across = () => [pc(), Fp(0), [bx(0), 85, -9], [bx(2), 85, -9], Fp(2), [bx(2), 85, 210], [bx(2), 64, ZF-20], [bx(2), 64, ZF+4], [bx(2), 64, ZF+220]];
+    return [
+      {title:'1 · Packet arrives at a blade port', dir:'req', hi:() => [q0],
+       hdr:'TCP SYN   203.0.113.10:51200 → 10.10.0.100:443',
+       text:'The client’s packet enters a QSFP28 port on blade 1, on the tenant’s external VLAN.',
+       pts:() => [[bx(0), 64, ZF+220], [bx(0), 64, ZF+4]]},
+      {title:'2 · Blade FPGA steers it to a TMM', dir:'req', hi:() => [b0],
+       hdr:'hash(flow) → TMM on blade 1',
+       text:'On VELOS every blade has its own FPGAs that steer traffic in hardware. They do the job of the switch and DAG: classify the packet and hash the flow to one of the tenant’s TMMs.',
+       pts:() => [[bx(0), 64, ZF+4], [bx(0), 64, ZF-20], [bx(0), 85, 210], Fp(0)]},
+      {title:'3 · Tenant TMM does the full proxy', dir:'req', hi:() => [pl],
+       hdr:'TCP + TLS terminated · iRules · LB → web-02',
+       text:'A BIG-IP tenant runs on this blade. Its TMM completes the TCP and TLS handshakes, runs iRules and persistence, and picks pool member web-02.',
+       pts:() => [Fp(0), [bx(0), 140, 165], pc()]},
+      {title:'4 · Across the backplane to blade 3', dir:'req', hi:() => [fab],
+       hdr:'SNAT 10.20.0.5:40012 → 10.20.1.12:80',
+       text:'web-02’s VLAN is cabled to a port on blade 3. The new server-side packet crosses the backplane (chassis fabric) and leaves through blade 3. To the tenant, all its blades behave like one big box.',
+       pts:across},
+      {title:'5 · Reply returns to the same TMM', dir:'resp', hi:() => [fab, pl],
+       hdr:'HTTP 200 OK   10.20.1.12:80 → 10.20.0.5:40012',
+       text:'The reply enters blade 3, crosses the backplane back to blade 1, and the FPGAs deliver it to the same TMM — both sides of the connection stay together, just like the DAG on a 1U appliance.',
+       pts:() => across().reverse()},
+      {title:'6 · Out to the client', dir:'resp', hi:() => [q0],
+       hdr:'10.10.0.100:443 → 203.0.113.10:51200  (TLS)',
+       text:'TMM encrypts the response and sends it out of blade 1’s port to the client.',
+       pts:() => [pc(), Fp(0), [bx(0), 85, 210], [bx(0), 64, ZF-20], [bx(0), 64, ZF+4], [bx(0), 64, ZF+220]]},
+    ];
+  }
+
+  function makePacket(){
+    const g = new T.Group();
+    const core = new T.Mesh(new T.SphereGeometry(6, 20, 20), new T.MeshBasicMaterial({color:PKT_REQ, depthTest:false, transparent:true}));
+    const halo = new T.Mesh(new T.SphereGeometry(15, 20, 20), new T.MeshBasicMaterial({color:PKT_REQ, depthTest:false, transparent:true, opacity:.25}));
+    core.renderOrder = halo.renderOrder = 999;
+    g.add(halo, core);
+    g.userData.core = core; g.userData.halo = halo;
+    return g;
+  }
+  function trailMesh(pts, color){
+    const path = new T.CurvePath();
+    for(let k = 0; k < pts.length - 1; k++) if(pts[k].distanceTo(pts[k+1]) > .01) path.add(new T.LineCurve3(pts[k], pts[k+1]));
+    const m = new T.Mesh(new T.TubeGeometry(path, Math.max(8, path.curves.length*12), 1.8, 6, false),
+      new T.MeshBasicMaterial({color, transparent:true, opacity:.6, depthTest:false}));
+    m.renderOrder = 998;
+    return m;
+  }
+  function resetPulls(){
+    cur.root.traverse(o => {
+      const pl = o.userData.pull;
+      if(!pl || o.userData.base === undefined) return;
+      for(let i = tweens.length - 1; i >= 0; i--) if(tweens[i].tag === 'pull:' + o.uuid) tweens.splice(i, 1);
+      o.position[pl.axis] = o.userData.base;
+      o.userData.out = false;
+    });
+  }
+
+  function goStep(i){
+    const f = flow;
+    f.i = i; f.done = false;
+    f.hi.forEach(o => highlight(o, false));
+    f.trails.forEach(t => { f.group.remove(t); t.geometry.dispose(); t.material.dispose(); });
+    f.trails = [];
+    for(let k = 0; k <= i; k++){
+      const st = f.steps[k];
+      const pts = st.pts().map(vec);
+      if(k === i) f.pts = pts;
+      const tr = trailMesh(pts, st.dir === 'resp' ? PKT_RESP : PKT_REQ);
+      if(k < i) tr.material.opacity = .25;
+      f.group.add(tr); f.trails.push(tr);
+    }
+    f.cum = [0];
+    for(let k = 1; k < f.pts.length; k++) f.cum.push(f.cum[k-1] + f.pts[k-1].distanceTo(f.pts[k]));
+    f.len = f.cum[f.cum.length - 1];
+    f.d = 0; f.phase = 'move'; f.holdT = 0;
+    const st = f.steps[i];
+    f.hold = Math.min(10, 3.5 + st.text.length/60);
+    const col = st.dir === 'resp' ? PKT_RESP : PKT_REQ;
+    f.packet.userData.core.material.color.setHex(col);
+    f.packet.userData.halo.material.color.setHex(col);
+    f.hi = st.hi().filter(Boolean);
+    f.hi.forEach(o => highlight(o, true));
+    renderFlowCard();
+  }
+  function pointAt(f, d){
+    for(let k = 1; k < f.cum.length; k++){
+      if(d <= f.cum[k]){
+        const seg = f.cum[k] - f.cum[k-1];
+        return f.pts[k-1].clone().lerp(f.pts[k], seg ? (d - f.cum[k-1])/seg : 1);
+      }
+    }
+    return f.pts[f.pts.length - 1].clone();
+  }
+  function updateFlow(dt){
+    const f = flow;
+    if(f.phase === 'move'){
+      f.d = Math.min(f.len, f.d + dt*240);
+      if(f.d >= f.len){ f.phase = 'hold'; f.holdT = 0; }
+    } else if(f.playing && !f.done){
+      f.holdT += dt;
+      if(f.holdT >= f.hold){
+        if(f.i < f.steps.length - 1) goStep(f.i + 1);
+        else { f.done = true; f.playing = false; renderFlowCard(); }
+      }
+    }
+    f.packet.position.copy(pointAt(f, f.d));
+    f.packet.userData.halo.scale.setScalar(1 + Math.sin(performance.now()/160)*.18);
+    $('flBar').style.width = (f.done ? 100 : f.phase === 'hold' ? Math.min(100, f.holdT/f.hold*100) : 0) + '%';
+  }
+  function renderFlowCard(){
+    const f = flow, st = f.steps[f.i];
+    $('flTag').textContent = `Packet flow · step ${f.i + 1} of ${f.steps.length} · ${platforms[pid].label}`;
+    $('flTitle').textContent = st.title.replace(/^\d+ · /, '');
+    $('flHdr').textContent = st.hdr;
+    $('flHdr').className = 'pkt-hdr ' + st.dir;
+    $('flText').textContent = st.text;
+    $('flSteps').innerHTML = f.steps.map((s, k) =>
+      `<li class="${k === f.i ? 'cur' : k < f.i ? 'done' : ''}" data-k="${k}">${esc(s.title.replace(/^\d+ · /, ''))}</li>`).join('');
+    $('flPlay').textContent = f.done ? '↻ Replay' : f.playing ? '❚❚ Pause' : '▶ Play';
+    const tag = $('pktTag');
+    tag.querySelector('span').textContent = st.hdr;
+    tag.classList.toggle('resp', st.dir === 'resp');
+  }
+  function updatePktTag(){
+    const el = $('pktTag');
+    if(!flow || !flow.packet){ el.style.display = 'none'; return; }
+    v3.copy(flow.packet.position).project(camera);
+    el.style.display = '';
+    el.style.transform = `translate(${((v3.x + 1)/2*stage.clientWidth).toFixed(1)}px, ${((1 - v3.y)/2*stage.clientHeight).toFixed(1)}px)`;
+  }
+
+  function startFlow(){
+    if(focus) exitFocus();
+    if(quiz) stopQuiz();
+    if(fault) stopFault();
+    if(cable) stopCable();
+    if(flow) stopFlow();
+    resetPulls();
+    flow = {starting:true};
+    renderUI();
+    $('flTag').textContent = 'Packet flow · ' + platforms[pid].label;
+    $('flTitle').textContent = 'Opening the chassis…';
+    $('flHdr').textContent = '';
+    $('flText').textContent = 'Unscrewing the cover so we can watch the packet travel inside the box.';
+    $('flSteps').innerHTML = '';
+    $('flBar').style.width = '0%';
+    $('flowCard').classList.add('show');
+    const sx = wide() ? 205 : 0, sy = wide() ? 0 : stage.clientHeight*.24;
+    shiftTo(sx, sy, 700);
+    const fc = computeFit(true);
+    camTween(fc.center, focusRadius(fc.rad, sx, sy, 1.02, 200), .62, .9, 900);
+    const go = () => {
+      flowTimer = null;
+      if(!flow || !flow.starting) return;
+      const group = new T.Group();
+      cur.root.add(group);
+      const packet = makePacket();
+      group.add(packet);
+      flow = {steps:pid === 'velos' ? velosSteps() : applianceSteps(platforms[pid]), group, packet, trails:[], hi:[], playing:true};
+      goStep(0);
+    };
+    if(state.open) go();
+    else { openChassis(); flowTimer = setTimeout(go, 3400); }
+  }
+  function stopFlow(){
+    if(!flow) return;
+    if(flowTimer){ clearTimeout(flowTimer); flowTimer = null; }
+    const f = flow;
+    flow = null;
+    if(f.hi) f.hi.forEach(o => highlight(o, false));
+    if(f.group){
+      cur.root.remove(f.group);
+      f.group.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); });
+    }
+    $('flowCard').classList.remove('show');
+    $('pktTag').style.display = 'none';
+    shiftTo(0, 0, 700);
+    const fc = cur.fit || computeFit();
+    camTween(fc.center, fc.r, .65, .95, 850);
+    renderUI();
+  }
+  const flowReady = () => flow && flow.steps;
+
+  // ======================= QUIZ =======================
+  let quiz = null, quizTimer = null;
+  const QUIZ_SKIP = new Set(['chassis','frontPanel','lid','lidScrew','boardScrew','earScrew']);
+  const fmtScore = s => s % 1 ? s.toFixed(1) : String(s);
+  const mmss = s => Math.floor(s/60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  function findAll(id){ const out = []; cur.root.traverse(o => { if(o.userData.id === id) out.push(o); }); return out; }
+  function tintAll(id, hex){ const objs = findAll(id); objs.forEach(o => highlight(o, true, hex, .65)); quiz.tinted.push(...objs); }
+  function clearTints(){ if(!quiz) return; quiz.tinted.forEach(o => highlight(o, false)); quiz.tinted = []; }
+  function quizZone(id){ const g = partsGroups(platforms[pid]).find(g => g[1].includes(id)); return g ? g[0].toLowerCase() : 'box'; }
+
+  function startQuiz(){
+    if(focus) exitFocus();
+    if(flow) stopFlow();
+    if(fault) stopFault();
+    if(cable) stopCable();
+    if(quiz) stopQuiz();
+    resetPulls();
+    const pool = focusOrder().filter(id => !QUIZ_SKIP.has(id) && findById(id));
+    for(let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const qs = pool.slice(0, Math.min(10, pool.length));
+    quiz = {qs, i:0, score:0, res:qs.map(() => ''), missed:[], wrong:0, hinted:false, answered:false, msg:null, tinted:[], starting:!state.open, done:false, t0:0};
+    $('quizCard').classList.add('show');
+    renderQuiz();
+    renderUI();
+    const sx = wide() ? 205 : 0, sy = wide() ? 0 : stage.clientHeight*.24;
+    shiftTo(sx, sy, 700);
+    const fc = computeFit(true);
+    camTween(fc.center, focusRadius(fc.rad, sx, sy, 1.02, 200), .62, .9, 900);
+    const go = () => {
+      quizTimer = null;
+      if(!quiz) return;
+      quiz.starting = false; quiz.t0 = performance.now();
+      renderQuiz();
+    };
+    if(state.open) go();
+    else { openChassis(); quizTimer = setTimeout(go, 3400); }
+  }
+  function stopQuiz(){
+    if(!quiz) return;
+    if(quizTimer){ clearTimeout(quizTimer); quizTimer = null; }
+    clearTints();
+    quiz = null;
+    $('quizCard').classList.remove('show');
+    shiftTo(0, 0, 700);
+    const fc = cur.fit || computeFit();
+    camTween(fc.center, fc.r, .65, .95, 850);
+    renderUI();
+  }
+  function reveal(text){
+    const z = quiz, want = z.qs[z.i];
+    z.answered = true; z.res[z.i] = 'miss'; z.missed.push(want);
+    tintAll(want, 0xf5c542);
+    z.msg = {cls:'bad', text};
+  }
+  function quizTap(o){
+    const z = quiz;
+    if(!z || z.starting || z.done || z.answered) return;
+    const id = o.userData.id, want = z.qs[z.i];
+    const wantLabel = lookup(want).label;
+    if(id === want){
+      const pts = z.wrong === 0 && !z.hinted ? 1 : .5;
+      z.score += pts; z.res[z.i] = pts === 1 ? 'ok' : 'half'; z.answered = true;
+      tintAll(want, 0x3ddc84);
+      const L = learnFor(want);
+      z.msg = {cls:'ok', text:`Correct! +${fmtScore(pts)}. ` + (L ? L.why : '')};
+    } else {
+      z.wrong++;
+      highlight(o, true, 0xf0495a, .7);
+      setTimeout(() => { if(quiz === z && !z.tinted.includes(o)) highlight(o, false); }, 900);
+      const name = lookup(id, o).label;
+      if(z.wrong >= 2) reveal(`That's the ${name}. The ${wantLabel} is glowing yellow — remember where it is.`);
+      else z.msg = {cls:'bad', text:`Not quite — that's the ${name}. Try again!`};
+    }
+    renderQuiz();
+  }
+  function finishQuiz(){
+    const z = quiz;
+    z.done = true;
+    z.secs = (performance.now() - z.t0)/1000;
+    z.best = null;
+    try{
+      const k = 'vnF5QuizBest-' + pid;
+      const prev = parseFloat(localStorage.getItem(k)) || 0;
+      if(z.score > prev) localStorage.setItem(k, z.score);
+      z.best = Math.max(prev, z.score);
+    }catch(e){}
+  }
+  function quizAct(act, id){
+    const z = quiz;
+    if(!z) return;
+    if(act === 'exit'){ stopQuiz(); return; }
+    if(act === 'again'){ startQuiz(); return; }
+    if(act === 'focus'){ stopQuiz(); const o = findById(id); if(o) focusPart(o); return; }
+    if(z.starting || z.done) return;
+    const want = z.qs[z.i];
+    if(act === 'hint' && !z.answered && !z.hinted){
+      z.hinted = true;
+      const L = learnFor(want);
+      z.msg = {cls:'info', text:`Hint: look at the ${quizZone(want)} of the box. ` + (L ? L.what : lookup(want).tip)};
+    }
+    if(act === 'show' && !z.answered) reveal(`Here it is: the ${lookup(want).label}, glowing yellow. No point this time.`);
+    if(act === 'next' && z.answered){
+      clearTints();
+      if(z.i < z.qs.length - 1){ z.i++; z.wrong = 0; z.hinted = false; z.answered = false; z.msg = null; }
+      else finishQuiz();
+    }
+    renderQuiz();
+  }
+  function renderQuiz(){
+    const z = quiz, el = $('quizCard');
+    if(!z) return;
+    const plat = platforms[pid].label;
+    const btn = (act, text, cls = '', dis = false) => `<button class="btn ${cls}" data-act="${act}"${dis ? ' disabled' : ''}>${text}</button>`;
+    if(z.done){
+      const n = z.qs.length, pct = z.score/n;
+      const verdict = pct >= .9 ? 'Excellent — F5 hardware expert!' : pct >= .7 ? 'Great job!' :
+        pct >= .5 ? 'Good start — review the parts you missed.' : 'Keep practising — use the Guided tour to learn the parts first.';
+      el.innerHTML = `<div class="fc-tag">Quiz finished · ${plat}</div>
+        <div class="qz-big">${fmtScore(z.score)} / ${n}</div>
+        <p class="fc-p">${verdict}</p>
+        <div class="qz-row"><span>Time ${mmss(z.secs)}</span>${z.best != null ? `<span>Best ${fmtScore(z.best)} / ${n}</span>` : ''}</div>
+        <div class="qz-dots">${z.res.map(r => `<i class="${r}"></i>`).join('')}</div>
+        ${z.missed.length ? `<div class="fc-h">Review these parts</div><div class="chips">${z.missed.map(id =>
+          `<span class="chip" data-act="focus" data-id="${id}">${esc(lookup(id).label)}</span>`).join('')}</div>` : ''}
+        <div class="qz-cta"><b>Want to master F5 BIG-IP?</b> Live labs, real-world scenarios and interview support at VedhaNet Academy.
+          <div class="fc-nav"><a class="btn cta-demo" data-cta="demo" data-text="${esc(BRAND.courseText)}" target="_blank" rel="noopener"></a><a class="btn cta-wa" data-cta="whatsapp" target="_blank" rel="noopener">WhatsApp</a></div></div>
+        <div class="fc-nav">${btn('again', '↻ Play again', 'primary')}${btn('exit', '✕ Exit')}</div>`;
+      if(window.VEDHANET && window.VEDHANET.apply) window.VEDHANET.apply();
+      return;
+    }
+    if(z.starting){
+      el.innerHTML = `<div class="fc-tag">Quiz · ${plat}</div><div class="fc-title">Get ready…</div>
+        <p class="fc-p">Opening the chassis so every part can be tapped. Labels are hidden — find each part yourself!</p>
+        <div class="fc-nav">${btn('exit', '✕ Exit')}</div>`;
+      return;
+    }
+    const want = z.qs[z.i], last = z.i === z.qs.length - 1;
+    el.innerHTML = `<div class="fc-tag">Quiz · question ${z.i + 1} of ${z.qs.length} · ${plat}</div>
+      <div class="qz-row"><span>Score <b>${fmtScore(z.score)}</b></span><span id="qzTime">${mmss((performance.now() - z.t0)/1000)}</span></div>
+      <div class="qz-ask">Tap the</div>
+      <div class="qz-part">${esc(lookup(want).label)}</div>
+      ${z.msg ? `<div class="qz-msg ${z.msg.cls}">${esc(z.msg.text)}</div>` : '<p class="fc-p" style="color:var(--muted)">Rotate the box if you need to. Labels are hidden.</p>'}
+      <div class="qz-dots">${z.res.map((r, k) => `<i class="${r}${k === z.i ? ' cur' : ''}"></i>`).join('')}</div>
+      <div class="fc-nav">
+        ${z.answered ? btn('next', last ? 'Finish ▶' : 'Next ▶', 'primary') : btn('hint', 'Hint (½ point)', '', z.hinted) + btn('show', 'Show me')}
+        ${btn('exit', '✕ Exit')}
+      </div>`;
+  }
+  function updateQuizTime(){
+    const t = document.getElementById('qzTime');
+    if(!t) return;
+    const s = mmss((performance.now() - quiz.t0)/1000);
+    if(t.textContent !== s) t.textContent = s;
+  }
+
+  // ======================= FAULT SIMULATOR =======================
+  let fault = null;
+  const LEDC = {green:0x3ddc84, amber:0xf5a524, red:0xf0495a, off:0x2a2f38};
+  const FIXED_PORTS = ['mgmt','console','ha','usb','lcd'];
+  const dataIds = () => platforms[pid].ports.map(x => x.id).filter(id => !FIXED_PORTS.includes(id));
+  const rootKids = id => cur.root.children.filter(c => c.userData.id === id);
+  const defaultPanel = () => pid === 'velos' ? {status:{s:'green'}, alarm:{s:'off'}} : {pwr:{s:'green'}, status:{s:'green'}, alarm:{s:'off'}};
+  const defaultLcd = () => pid === 'velos' ? 'CHASSIS OK · no alarms' : 'ACTIVE · no alarms';
+  function ledsIn(obj){ const out = []; obj.traverse(m => { if(m.isMesh && m.userData.isLed) out.push(m); }); return out; }
+  function screensIn(obj){ const out = []; obj.traverse(m => { if(m.isMesh && !m.userData.isLed && m.material.color.getHex() === 0x22d3c5) out.push(m); }); return out; }
+
+  function recolor(m, hex, ei){
+    const mt = m.material, s = {c:mt.color.getHex(), e:mt.emissive.getHex(), ei:mt.emissiveIntensity};
+    fault.undo.push(() => { mt.color.setHex(s.c); mt.emissive.setHex(s.e); mt.emissiveIntensity = s.ei; });
+    mt.color.setHex(hex); mt.emissive.setHex(ei ? hex : 0); mt.emissiveIntensity = ei || 0;
+  }
+  function tintObj(obj, hex, ei){
+    obj.traverse(m => {
+      if(!m.isMesh || !m.material.emissive) return;
+      const mt = m.material, s = {e:mt.emissive.getHex(), ei:mt.emissiveIntensity};
+      fault.undo.push(() => { mt.emissive.setHex(s.e); mt.emissiveIntensity = s.ei; });
+      mt.emissive.setHex(hex); mt.emissiveIntensity = ei;
+    });
+  }
+  function setDead(m){ m.userData.dead = true; fault.undo.push(() => { m.userData.dead = false; }); }
+  function setSpeed(obj, sp){
+    obj.traverse(o => {
+      const r = o.userData.rotor;
+      if(!r) return;
+      const s0 = r.userData.speed;
+      r.userData.speed = sp;
+      fault.undo.push(() => { r.userData.speed = s0; });
+    });
+  }
+  function fadeTo(obj, k, dur){
+    obj.traverse(m => {
+      if(!m.material) return;
+      const mt = m.material;
+      if(!fault.fadeOrig.has(m)){
+        const s = {op:mt.opacity, tr:mt.transparent, dw:mt.depthWrite};
+        fault.fadeOrig.set(m, s);
+        fault.undo.push(() => { mt.opacity = s.op; mt.transparent = s.tr; mt.depthWrite = s.dw; });
+      }
+      const from = mt.opacity, to = fault.fadeOrig.get(m).op*k;
+      mt.transparent = true; mt.depthWrite = false;
+      tween(dur, e => { mt.opacity = from + (to - from)*e; }, null, 'fade:' + m.uuid);
+    });
+  }
+  function panelLed(id, s, blink){
+    fault.panel[id] = {s, b:!!blink};
+    findAll(id).forEach(g => ledsIn(g).forEach(m => {
+      recolor(m, LEDC[s], s === 'off' ? 0 : 1.6);
+      if(blink && s !== 'off') fault.blinks.push({m, c:LEDC[s]});
+    }));
+  }
+  function allDark(){
+    Object.keys(fault.panel).forEach(k => { fault.panel[k] = {s:'off'}; });
+    cur.root.traverse(m => { if(m.isMesh && m.userData.isLed){ setDead(m); recolor(m, LEDC.off, 0); } });
+    screensIn(cur.root).forEach(m => recolor(m, 0x0b1418, 0));
+    setSpeed(cur.root, 0);
+    fault.lcd = null;
+  }
+  function later(ms, fn){
+    const f = fault;
+    f.timers.push(setTimeout(() => { if(fault === f) fn(); }, ms));
+  }
+  function pullCycle(g, done){
+    togglePull(g);
+    later(900, () => togglePull(g));
+    later(1750, done);
+  }
+  function startTemp(a, b){
+    fault.temp = a;
+    const tick = () => { if(fault.temp != null && fault.temp < b){ fault.temp++; renderTemp(); later(650, tick); } };
+    later(650, tick);
+  }
+  function restoreAll(){
+    const f = fault;
+    if(!f) return;
+    f.timers.forEach(clearTimeout); f.timers = [];
+    for(let i = tweens.length - 1; i >= 0; i--) if(tweens[i].tag && tweens[i].tag.startsWith('fade:')) tweens.splice(i, 1);
+    f.blinks = [];
+    while(f.undo.length) f.undo.pop()();
+    f.fadeOrig = new Map();
+    f.temp = null; f.ha = null;
+    f.panel = defaultPanel(); f.lcd = defaultLcd(); f.lcdAlarm = false;
+  }
+  function finishFault(){ restoreAll(); fault.phase = 'fixed'; renderFault(); }
+
+  function faultList(){
+    if(pid === 'velos'){
+      const blades = () => rootKids('blade'), ctrls = () => rootKids('controller'), trays = () => rootKids('fans');
+      return [
+        {title:'A blade fails', short:'Blade 2 stops working.', view:'front', open:true,
+         see:['Blade 2’s status LED goes red and its port lights go dark','The TMMs running on blade 2 disappear','The other blades keep forwarding traffic'],
+         impact:'Tenants keep running on the other blades of their partition, with less capacity. Connections that were being handled by blade 2’s TMMs are lost and must reconnect.',
+         steps:['Check blade status and alarms in the F5OS-C chassis GUI / CLI on the system controller.','Reseat the blade; if it still fails, open an F5 support case for an RMA.','Plan capacity so each partition still copes with one blade down (N+1).'],
+         log:'alert: blade 2 is not ready — removed from partition', fixLabel:'Replace blade 2',
+         fixed:'New blade inserted — it joins the partition and its TMMs come back.',
+         inject(){
+           const b = blades()[1];
+           ledsIn(b).forEach(m => { if(m.userData.port){ setDead(m); recolor(m, LEDC.off, 0); } else recolor(m, LEDC.red, 1.6); });
+           tintObj(b, LEDC.red, .35);
+           fadeTo(tmmPlates()[1], .05, 800);
+           panelLed('alarm', 'amber');
+           fault.lcd = 'BLADE 2 FAILED'; fault.lcdAlarm = true;
+         },
+         fix(done){ pullCycle(blades()[1], () => done()); }},
+        {title:'System controller A fails', short:'The active controller dies.', view:'front', open:false,
+         see:['Controller A goes dark — LEDs and display off','Controller B becomes ACTIVE','Blades keep forwarding traffic'],
+         impact:'No traffic impact — the data plane lives on the blades. Only chassis management (F5OS-C and the chassis management IP) moves to controller B.',
+         steps:['Log in to the chassis management IP — it now answers from controller B.','Check controller status and alarms in F5OS-C.','Replace controller A (hot-swap); it comes back as STANDBY.'],
+         log:'controller-1 lost — controller-2 is now active', fixLabel:'Replace controller A',
+         fixed:'Controller A replaced — it is back as STANDBY. Controller B stays ACTIVE.',
+         inject(){
+           const c = ctrls()[0];
+           ledsIn(c).forEach(m => { setDead(m); recolor(m, LEDC.off, 0); });
+           screensIn(c).forEach(m => recolor(m, 0x0b1418, 0));
+           tintObj(c, LEDC.red, .3);
+           fault.ha = {aName:'Controller A', bName:'Controller B', a:'ACTIVE', b:'STANDBY'};
+           later(400, () => { fault.ha.a = 'FAILED'; renderFaultHA(); });
+           later(1800, () => { fault.ha.b = 'ACTIVE'; renderFaultHA(); });
+         },
+         fix(done){
+           const ha = fault.ha;
+           pullCycle(ctrls()[0], () => { restoreAll(); fault.ha = ha; ha.a = 'STANDBY'; done(true); });
+         }},
+        {title:'A power supply fails', short:'One of the chassis PSUs dies.', view:'back', open:false,
+         see:['That PSU’s LED goes red','ALARM LEDs on the controllers turn amber','The chassis keeps running on the other PSUs'],
+         impact:'None right now — the remaining PSUs carry the load. Redundancy is reduced until it is replaced.',
+         steps:['Check the power cord and the PDU / power feed first.','Check PSU status and alarms in F5OS-C.','Hot-swap the PSU with the same type (AC or DC).'],
+         log:'alert: PSU 1 input lost', fixLabel:'Replace PSU',
+         fixed:'New PSU inserted — LED green, alarm cleared.',
+         inject(){ ledsIn(findAll('psu')[0]).forEach(m => recolor(m, LEDC.red, 1.6)); panelLed('alarm', 'amber'); fault.lcd = 'PSU 1 FAILURE'; fault.lcdAlarm = true; },
+         fix(done){ pullCycle(findAll('psu')[0], () => done()); }},
+        {title:'A fan tray fails', short:'Two fans stop spinning.', view:'back', open:false,
+         see:['The middle fan tray stops (red)','The other fan trays speed up','Chassis temperature starts to climb'],
+         impact:'Traffic keeps flowing while the other fans compensate. If the temperature keeps rising, blades can throttle or shut down to protect themselves.',
+         steps:['Check fan and temperature alarms in F5OS-C.','Make sure the front faces the cold aisle and nothing blocks the vents.','Hot-swap the fan tray as soon as possible.'],
+         log:'alert: fan tray 2 failure', fixLabel:'Replace fan tray',
+         fixed:'New fan tray spinning — temperature dropping back to normal.',
+         inject(){
+           trays().forEach((t, i) => setSpeed(t, i === 1 ? 0 : 1.7));
+           tintObj(trays()[1], LEDC.red, .5);
+           panelLed('alarm', 'amber');
+           fault.lcd = 'FAN TRAY 2 FAILURE'; fault.lcdAlarm = true;
+           startTemp(38, 57);
+         },
+         fix(done){ pullCycle(trays()[1], () => done()); }},
+      ];
+    }
+    return [
+      {title:'Power supply 1 fails', short:'One of the two PSUs dies.', view:'back', open:false,
+       see:['ALARM LED turns amber','PSU 1’s LED goes red','The LCD shows the power-supply alarm','PWR LED stays green — PSU 2 is still powering the box'],
+       impact:'None right now — PSU 2 carries the full load. But redundancy is gone: if PSU 2 or its power feed fails too, the whole unit goes down.',
+       steps:['Check the power cord and the PDU / power feed first — most "PSU failures" are a cable or a feed.','`tmsh show sys hardware` → check the power supply status.','Read the alert in `/var/log/ltm`.','Hot-swap the PSU with the same type (AC / DC / HVDC) — no downtime.'],
+       log:'alert: power supply #1 status changed to DOWN', fixLabel:'Replace PSU 1',
+       fixed:'New PSU inserted — PSU LED green, alarm cleared. Redundancy is back.',
+       inject(){ ledsIn(findAll('psu')[0]).forEach(m => recolor(m, LEDC.red, 1.6)); panelLed('alarm', 'amber'); fault.lcd = 'PSU 1 FAILURE'; fault.lcdAlarm = true; },
+       fix(done){ pullCycle(findAll('psu')[0], () => done()); }},
+      {title:'A fan module fails', short:'One fan stops spinning.', view:'iso', open:true,
+       see:['Fan 3 stops (red) and the other fans speed up','ALARM LED turns amber','The temperature starts to climb','The LCD shows the fan alarm'],
+       impact:'Traffic keeps flowing — the other fans spin faster to compensate. If the temperature keeps rising, the unit can throttle or shut down to protect itself.',
+       steps:['`tmsh show sys hardware` → fan speeds and temperature sensors.','Check airflow: front facing the cold aisle, no blocked vents, blanking panels fitted.','Replace the fan module (hot-swap) as soon as possible.'],
+       log:'alert: fan 3 speed below threshold', fixLabel:'Replace fan 3',
+       fixed:'New fan spinning — temperature dropping back to normal, alarm cleared.',
+       inject(){
+         cur.fans.forEach((f, i) => setSpeed(f, i === 2 ? 0 : 1.8));
+         tintObj(cur.fans[2], LEDC.red, .6);
+         panelLed('alarm', 'amber');
+         fault.lcd = 'FAN 3 FAILURE'; fault.lcdAlarm = true;
+         startTemp(42, 61);
+       },
+       fix(done){ pullCycle(cur.fans[2], () => done()); }},
+      {title:'A data link goes down', short:'An uplink cable or optic fails.', view:'front', open:false,
+       see:['The link LEDs on the uplink ports go dark','The interface shows DOWN in the GUI and in tmsh','Health monitors start failing for anything reachable only through that link'],
+       impact:'If this port is the only link in the VLAN, virtual servers on that VLAN become unreachable. With a trunk (LACP) of 2+ links, traffic continues on the remaining link at lower capacity. VLAN failsafe can also trigger an HA failover.',
+       steps:['`tmsh show net interface` → find the interface that is down.','`tmsh show net interface 1.1 all-properties` → check media and errors.','Swap the cable, then the optic; check the switch port on the other side.','Design tip: always use trunks with 2+ links for production VLANs.'],
+       log:'Link: 1.1 is DOWN', fixLabel:'Reseat optic and cable',
+       fixed:'Link is back up — LEDs blinking with traffic again.',
+       inject(){
+         const g = findById(dataIds()[0]);
+         ledsIn(g).forEach(m => { setDead(m); recolor(m, LEDC.off, 0); });
+         tintObj(g, LEDC.red, .45);
+       },
+       fix(done){ later(900, () => done()); }},
+      {title:'TMM restarts (crash)', short:'The data-plane software crashes and restarts.', view:'iso', open:true,
+       see:['The TMM layers turn red and disappear for a few seconds','The STATUS LED blinks while TMM restarts','Then TMM comes back on its own'],
+       impact:'Every connection on this unit is dropped while TMM restarts (a few seconds). In an HA pair the standby can take over, depending on your HA settings.',
+       steps:['Check `/var/log/ltm` for the restart message and the time.','Look for a core file in `/var/core` — open an F5 support case with it and a QKView.','Check memory (`tmsh show sys memory`) and any recent config or iRule change.'],
+       log:'tmm restarted — core file written to /var/core', fixLabel:null,
+       fixed:'TMM is back and traffic is flowing again. Now find out WHY it restarted.',
+       inject(){
+         const plates = tmmPlates();
+         plates.forEach(p => tintObj(p, LEDC.red, .9));
+         panelLed('status', 'amber', true);
+         fault.lcd = 'TMM RESTARTING'; fault.lcdAlarm = true;
+         later(1200, () => plates.forEach(p => fadeTo(p, .04, 600)));
+         later(4200, () => plates.forEach(p => fadeTo(p, 1, 700)));
+         later(5300, finishFault);
+       }},
+      {title:'Active unit loses power (HA failover)', short:'Both power feeds fail — the standby takes over.', view:'iso', open:false,
+       see:['Every LED goes dark and the fans stop','Unit B stops hearing heartbeats from Unit A','Unit B becomes ACTIVE and takes over the floating IPs'],
+       impact:'Users see a short blip (a few seconds). Open connections survive only if connection mirroring is enabled; persistence can be mirrored too. Traffic now flows through Unit B.',
+       steps:['On the peer: `tmsh show cm failover-status` → confirm it is ACTIVE.','Check both power feeds / PDUs and both PSUs of the failed unit.','When power returns, the unit boots and joins as STANDBY — there is no automatic fail-back unless you configure it.'],
+       log:'(Unit B) failover: peer heartbeat lost — this unit is now ACTIVE', fixLabel:'Restore power',
+       fixed:'Unit A booted and joined the pair as STANDBY (STATUS blinking amber). Unit B stays ACTIVE.',
+       inject(){
+         allDark();
+         fault.ha = {aName:'Unit A (this box)', bName:'Unit B (peer)', a:'ACTIVE', b:'STANDBY', traffic:'A'};
+         later(300, () => { fault.ha.a = 'OFFLINE'; fault.ha.traffic = null; renderFaultHA(); });
+         later(1900, () => { fault.ha.b = 'ACTIVE'; fault.ha.traffic = 'B'; renderFaultHA(); });
+       },
+       fix(done){
+         const ha = fault.ha;
+         restoreAll();
+         fault.ha = ha; ha.a = 'BOOTING';
+         panelLed('status', 'amber', true);
+         fault.lcd = 'BOOTING…';
+         renderFault();
+         later(2600, () => { ha.a = 'STANDBY'; fault.lcd = 'STANDBY'; done(true); });
+       }},
+    ];
+  }
+
+  function faultCam(view){
+    const sx = wide() ? 205 : 0, sy = wide() ? 0 : stage.clientHeight*.24;
+    shiftTo(sx, sy, 700);
+    const fc = computeFit(state.open);
+    const V = {iso:[.65,.92], front:[.3,1.22], back:[Math.PI + .55, 1.05]}[view];
+    camTween(fc.center, focusRadius(fc.rad, sx, sy, 1.02, 200), V[0], V[1], 900);
+  }
+  function startFault(){
+    if(focus) exitFocus();
+    if(flow) stopFlow();
+    if(quiz) stopQuiz();
+    if(cable) stopCable();
+    if(fault) stopFault();
+    resetPulls();
+    fault = {phase:'pick', sc:null, undo:[], blinks:[], timers:[], fadeOrig:new Map(), ha:null, temp:null, panel:defaultPanel(), lcd:defaultLcd(), lcdAlarm:false};
+    $('faultCard').classList.add('show');
+    renderFault();
+    renderUI();
+    faultCam('iso');
+  }
+  function pickScenario(i){
+    const f = fault;
+    restoreAll();
+    resetPulls();
+    const s = faultList()[i];
+    f.sc = s;
+    const go = () => { f.phase = 'active'; s.inject(); renderFault(); };
+    if(s.open && !state.open){
+      f.phase = 'starting';
+      openChassis();
+      later(3400, () => { faultCam(s.view); go(); });
+    } else go();
+    faultCam(s.view);
+    renderFault();
+  }
+  function fixScenario(){
+    const f = fault, s = f && f.sc;
+    if(!s || f.phase !== 'active' || !s.fix) return;
+    f.phase = 'fixing';
+    renderFault();
+    s.fix(keep => {
+      if(fault !== f) return;
+      if(!keep) restoreAll();
+      f.phase = 'fixed';
+      renderFault();
+    });
+  }
+  function backToList(){
+    restoreAll();
+    resetPulls();
+    fault.sc = null; fault.phase = 'pick';
+    faultCam('iso');
+    renderFault();
+  }
+  function stopFault(){
+    if(!fault) return;
+    restoreAll();
+    fault = null;
+    resetPulls();
+    $('faultCard').classList.remove('show');
+    shiftTo(0, 0, 700);
+    const fc = cur.fit || computeFit();
+    camTween(fc.center, fc.r, .65, .95, 850);
+    renderUI();
+  }
+  function ledDot(v){
+    const c = {green:'#3ddc84', amber:'#f5a524', red:'#f0495a', off:'#3a4250'}[v.s];
+    return `<i class="ft-led${v.b ? ' blink' : ''}" style="background:${c};color:${v.s === 'off' ? 'transparent' : c}"></i>`;
+  }
+  function renderTemp(){
+    const el = document.getElementById('ftTemp');
+    if(!el || !fault) return;
+    el.innerHTML = fault.temp == null ? '' :
+      `<div class="ft-temp">CPU temperature: <b class="${fault.temp >= 55 ? 'hot' : ''}">${fault.temp}°C</b>${fault.temp >= 55 ? ' — rising!' : ''}</div>`;
+  }
+  function renderFaultHA(){
+    const el = document.getElementById('ftHA');
+    if(!el || !fault) return;
+    const h = fault.ha;
+    if(!h){ el.innerHTML = ''; return; }
+    const unit = (name, st, tr) => `<div class="ft-unit${tr ? ' traffic' : ''}"><b>${name}</b><span class="ft-st ${st}">${st}</span>${tr ? '<div class="ft-traffic">● traffic flows here</div>' : ''}</div>`;
+    el.innerHTML = `<div class="ft-ha">${unit(h.aName, h.a, h.traffic === 'A')}${unit(h.bName, h.b, h.traffic === 'B')}</div>`;
+  }
+  function renderFault(){
+    const f = fault, el = $('faultCard');
+    if(!f) return;
+    const plat = platforms[pid].label;
+    if(f.phase === 'pick'){
+      el.innerHTML = `<div class="fc-tag">Fault simulator · ${plat}</div><div class="fc-title">What can go wrong?</div>
+        <p class="fc-p">Pick a fault. Watch the LEDs, LCD and fans react, then troubleshoot and fix it — just like in the data centre.</p>
+        <div class="ft-list">${faultList().map((s, i) => `<button class="ft-item" data-act="pick" data-i="${i}"><b>${esc(s.title)}</b><span>${esc(s.short)}</span></button>`).join('')}</div>
+        <div class="fc-nav"><button class="btn" data-act="exit">✕ Exit</button></div>`;
+      return;
+    }
+    const s = f.sc;
+    const panel = Object.entries(f.panel).map(([k, v]) => `<span>${ledDot(v)}${k.toUpperCase()}</span>`).join('');
+    const lcdCls = f.lcd == null ? 'off' : f.lcdAlarm ? 'alarm' : '';
+    const nav = [];
+    if(f.phase === 'active' && s.fixLabel) nav.push(`<button class="btn primary" data-act="fix">${esc(s.fixLabel)}</button>`);
+    if(f.phase === 'fixing' || f.phase === 'starting' || (f.phase === 'active' && !s.fixLabel)) nav.push('<button class="btn" disabled>Working…</button>');
+    nav.push('<button class="btn" data-act="list">Other faults</button>', '<button class="btn" data-act="exit">✕ Exit</button>');
+    el.innerHTML = `<div class="fc-tag">Fault simulator · ${plat}</div>
+      <div class="fc-title">${esc(s.title)}</div>
+      ${f.phase === 'starting' ? '<p class="fc-p">Opening the chassis…</p>' : ''}
+      <div class="ft-panel">${panel}</div>
+      <div class="ft-lcd ${lcdCls}">LCD ▸ ${esc(f.lcd == null ? 'screen off' : f.lcd)}</div>
+      <div id="ftHA"></div><div id="ftTemp"></div>
+      ${f.phase === 'fixed' ? `<div class="qz-msg ok" style="margin-top:12px">${esc(s.fixed)}</div>` : ''}
+      <div class="ft-sec"><div class="fc-h">What you see</div><ul>${s.see.map(x => `<li>${fmt(x)}</li>`).join('')}</ul></div>
+      <div class="ft-sec"><div class="fc-h">Impact on traffic</div><p class="fc-p">${fmt(s.impact)}</p></div>
+      <div class="ft-sec"><div class="fc-h">How to troubleshoot</div><ol>${s.steps.map(x => `<li>${fmt(x)}</li>`).join('')}</ol></div>
+      ${s.log ? `<div class="ft-log"><i>Log — simplified example</i>${esc(s.log)}</div>` : ''}
+      <div class="fc-nav">${nav.join('')}</div>`;
+    renderFaultHA();
+    renderTemp();
+  }
+
+  // ======================= CABLING =======================
+  let cable = null;
+  function cableRows(){
+    if(pid === 'velos') return [
+      {key:'core', name:'Blades → core switch', sw:['#22d3c5'],
+       desc:'Client-side traffic. QSFP28 ports on blades 1 and 2 go to the core switch and are bundled into one trunk (LACP) for the tenant’s external VLAN. Spreading trunk members across different blades means one blade failure never cuts the link.'},
+      {key:'server', name:'Blades → server switch', sw:['#3ddc84'],
+       desc:'Server-side traffic. QSFP28 ports on blades 3 and 4 go to the server switch, trunked for the internal VLAN where the pool members live.'},
+      {key:'mgmt', name:'Controllers → mgmt switch', sw:['#9aa6b8'],
+       desc:'Each system controller’s 10GbE management port goes to the management switch. The chassis management IP (F5OS-C) moves between the two controllers; every tenant also gets its own management IP.'},
+      {key:'console', name:'Controllers → console server', sw:['#7dd3fc'],
+       desc:'Both controllers’ console ports go to a console (terminal) server, so you still get a CLI when the network is down.'},
+      {key:'power', name:'PSUs → PDU A + PDU B', sw:['#f0495a','#3b8bff'],
+       desc:'Half of the power supplies go to PDU A, half to PDU B — two separate power feeds. If one feed fails, the chassis keeps running on the other.'},
+    ];
+    return [
+      {key:'core', name:'External trunk → core switch', sw:['#22d3c5'],
+       desc:'Client-side traffic. Two uplinks bundled in a trunk (LACP) carry VLAN external — for example 10.10.0.0/24 with self-IP 10.10.0.10, floating self-IP 10.10.0.12 and virtual servers such as 10.10.0.100:443.'},
+      {key:'server', name:'Internal trunk → server switch', sw:['#3ddc84'],
+       desc:'Server-side traffic to the pool members. Two links in a trunk carry VLAN internal — for example 10.20.0.0/24, self-IP 10.20.0.10, floating / SNAT address 10.20.0.5.'},
+      {key:'havlan', name:'HA VLAN → peer unit', sw:['#8b7cf6'],
+       desc:'A dedicated link to the HA peer for network-failover heartbeats, config sync and connection mirroring — for example VLAN ha 192.168.100.0/30. Keep it separate from client traffic.'},
+      {key:'serial', name:'Serial failover cable → peer', sw:['#f5c542'],
+       desc:'Hard-wired backup heartbeat between the two units. If the active unit loses power, the signal drops and the standby takes over. Works only for a 2-unit pair.'},
+      {key:'mgmt', name:'MGMT → management switch', sw:['#9aa6b8'],
+       desc:'Out-of-band management network for the GUI, SSH and API (for example 10.0.0.245). It is handled by Linux, not TMM, and never carries production traffic.'},
+      {key:'console', name:'Console → console server', sw:['#7dd3fc'],
+       desc:'Serial console to a console (terminal) server, so you still get a CLI when the network or the management IP is broken.'},
+      {key:'power', name:'Power A + B → two PDUs', sw:['#f0495a','#3b8bff'],
+       desc:'Each PSU goes to a different power feed — PDU A and PDU B. If one feed or one PDU fails, the other PSU keeps the box running.'},
+    ];
+  }
+  function cablePort(obj){
+    const b = new T.Box3().setFromObject(obj), c = b.getCenter(new T.Vector3());
+    return new T.Vector3(c.x, c.y, b.max.z + .5);
+  }
+  function cableTube(a, dA, b, dB, color, key){
+    const mid = a.clone().add(b).multiplyScalar(.5);
+    mid.y = Math.max(a.y, b.y) + 26;
+    const pts = [a, a.clone().addScaledVector(dA, 38), mid, b.clone().addScaledVector(dB, 38), b];
+    const m = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts, false, 'centripetal'), 90, 3, 8, false), mat(color, {r:.45}));
+    m.castShadow = true;
+    m.userData.id = 'cab-' + key;
+    m.userData.cableColor = color;
+    cable.tubes.push({m, key});
+    cable.group.add(m);
+  }
+  function device(key, name, x, z, w, h, d, color, faceMinusZ, n){
+    const g = G('cab-' + key);
+    g.add(C(w, h, d, color, x, 0, z, {m:.4, r:.5}));
+    const fz = faceMinusZ ? z : z + d, out = faceMinusZ ? -1 : 1;
+    const pts = [];
+    for(let i = 0; i < n; i++){
+      const px = n === 1 ? x + w/2 : x + 22 + i*(w - 44)/(n - 1);
+      g.add(C(10, 8, 1, '#05070b', px - 5, h*.4, faceMinusZ ? fz - .8 : fz - .2, {shadow:false}));
+      pts.push(new T.Vector3(px, h*.4 + 4, fz + out));
+    }
+    for(let i = 0; i < 3; i++) g.add(C(2.5, 2, 1, '#3ddc84', x + 8 + i*5, h - 6, faceMinusZ ? fz - .8 : fz - .2, {em:'#3ddc84', shadow:false}));
+    cable.group.add(g);
+    label('cab-' + key, name, cable.group, [x + w/2, h + 2, z + d/2], {cable:true, action:() => selectCable(key)});
+    return pts;
+  }
+  function buildApplianceCabling(){
+    const ZF = cur.ZF, ZB = cur.ZB, fwd = new T.Vector3(0, 0, 1), back = new T.Vector3(0, 0, -1);
+    const ids = dataIds();
+    const ext = findById(ids[0]).userData.cages, inn = findById(ids[1]).userData.cages;
+    const core = device('core', 'Core switch', -330, ZF + 120, 210, 32, 90, '#2b3346', true, 2);
+    const srv = device('server', 'Server switch', 120, ZF + 120, 210, 32, 90, '#2b3346', true, 2);
+    const mg = device('mgmt', 'Mgmt switch', -310, ZF + 270, 120, 26, 70, '#3a4252', true, 1);
+    const cn = device('console', 'Console server', -165, ZF + 270, 110, 26, 70, '#3a4252', true, 1);
+    const peer = device('havlan', 'Unit B (HA peer)', 0, ZF + 270, 320, 34, 120, '#dde2e9', true, 2);
+    const pa = device('power', 'PDU A', -240, ZB - 140, 150, 22, 40, '#1b2130', false, 1);
+    const pb = device('power', 'PDU B', 20, ZB - 140, 150, 22, 40, '#1b2130', false, 1);
+    [0, 1].forEach(i => cableTube(cablePort(ext[i]), fwd, core[i], back, '#22d3c5', 'core'));
+    [0, 1].forEach(i => cableTube(cablePort(inn[i]), fwd, srv[i], back, '#3ddc84', 'server'));
+    cableTube(cablePort(inn[inn.length - 1]), fwd, peer[0], back, '#8b7cf6', 'havlan');
+    cableTube(cablePort(findById('ha')), fwd, peer[1], back, '#f5c542', 'serial');
+    cableTube(cablePort(findById('mgmt')), fwd, mg[0], back, '#9aa6b8', 'mgmt');
+    cableTube(cablePort(findById('console')), fwd, cn[0], back, '#7dd3fc', 'console');
+    const psus = findAll('psu');
+    cableTube(psus[0].userData.inlet.clone(), back, pa[0], fwd, '#f0495a', 'power');
+    cableTube(psus[1].userData.inlet.clone(), back, pb[0], fwd, '#3b8bff', 'power');
+  }
+  function buildVelosCabling(){
+    const ZF = cur.ZF, ZB = cur.ZB, fwd = new T.Vector3(0, 0, 1), back = new T.Vector3(0, 0, -1);
+    const blades = rootKids('blade'), ctrls = rootKids('controller');
+    const cageOf = b => b.children.find(c => c.userData.id === 'qsfp28').userData.cages[1];
+    const core = device('core', 'Core switch', -350, ZF + 140, 220, 40, 90, '#2b3346', true, 2);
+    const srv = device('server', 'Server switch', 130, ZF + 140, 220, 40, 90, '#2b3346', true, 2);
+    const mg = device('mgmt', 'Mgmt switch', -300, ZF + 300, 130, 26, 70, '#3a4252', true, 2);
+    const cn = device('console', 'Console server', -140, ZF + 300, 120, 26, 70, '#3a4252', true, 2);
+    const pa = device('power', 'PDU A', -230, ZB - 150, 180, 24, 40, '#1b2130', false, 2);
+    const pb = device('power', 'PDU B', 30, ZB - 150, 180, 24, 40, '#1b2130', false, 2);
+    [0, 1].forEach(i => cableTube(cablePort(cageOf(blades[i])), fwd, core[i], back, '#22d3c5', 'core'));
+    [2, 3].forEach((b, i) => cableTube(cablePort(cageOf(blades[b])), fwd, srv[i], back, '#3ddc84', 'server'));
+    ctrls.forEach((c, i) => {
+      cableTube(cablePort(c.children.find(o => o.userData.id === 'mgmt')), fwd, mg[i], back, '#9aa6b8', 'mgmt');
+      cableTube(cablePort(c.children.find(o => o.userData.id === 'console')), fwd, cn[i], back, '#7dd3fc', 'console');
+    });
+    const psus = findAll('psu');
+    [0, 1].forEach(i => cableTube(psus[i].userData.inlet.clone(), back, pa[i], fwd, '#f0495a', 'power'));
+    [2, 3].forEach((p, i) => cableTube(psus[p].userData.inlet.clone(), back, pb[i], fwd, '#3b8bff', 'power'));
+  }
+  function selectCable(key){
+    cable.sel = cable.sel === key ? null : key;
+    cable.tubes.forEach(t => {
+      const on = !cable.sel || t.key === cable.sel, mt = t.m.material;
+      mt.transparent = !on; mt.opacity = on ? 1 : .12; mt.depthWrite = on;
+      mt.emissive.set(cable.sel && on ? t.m.userData.cableColor : '#000000');
+      mt.emissiveIntensity = cable.sel && on ? .5 : 1;
+    });
+    renderCable();
+  }
+  function renderCable(){
+    if(!cable) return;
+    const rules = pid === 'velos'
+      ? '<b>Golden rules:</b> spread trunk members across blades · management out-of-band · console always reachable · PSUs on A + B power feeds.'
+      : '<b>Golden rules:</b> two links per VLAN in a trunk · a separate HA VLAN · management out-of-band · console always reachable · PSUs on A + B power feeds.';
+    $('cableCard').innerHTML = `<div class="fc-tag">Cabling · ${platforms[pid].label}</div>
+      <div class="fc-title">How the box is wired</div>
+      <p class="fc-p">Tap a cable or a device on the model — or pick a row below.</p>
+      <div class="cb-rows">${cableRows().map(r => `<button class="cb-row${cable.sel === r.key ? ' sel' : ''}" data-key="${r.key}">
+        <div class="nm">${r.sw.map(c => `<i class="cb-sw" style="background:${c}"></i>`).join('')}${esc(r.name)}</div>
+        <div class="ds">${fmt(r.desc)}</div></button>`).join('')}</div>
+      <div class="cb-rules">${rules}</div>
+      <div class="fc-nav"><button class="btn" data-act="exit">✕ Exit cabling</button></div>`;
+  }
+  function startCable(){
+    if(focus) exitFocus();
+    if(flow) stopFlow();
+    if(quiz) stopQuiz();
+    if(fault) stopFault();
+    if(cable) stopCable();
+    resetPulls();
+    cable = {group:new T.Group(), tubes:[], sel:null, labels:[], bezel:null};
+    cur.root.add(cable.group);
+    const n0 = cur.labels.length;
+    if(pid === 'velos') buildVelosCabling(); else buildApplianceCabling();
+    cable.labels = cur.labels.slice(n0);
+    const bz = findById('bezel');
+    if(bz){ cable.bezel = bz; bz.visible = false; }
+    $('cableCard').classList.add('show');
+    renderCable();
+    renderUI();
+    const sx = wide() ? 205 : 0, sy = wide() ? 0 : stage.clientHeight*.24;
+    shiftTo(sx, sy, 700);
+    const fc = computeFit(false);
+    camTween(fc.center, focusRadius(fc.rad, sx, sy, .8, 200), .5, .95, 900);
+  }
+  function stopCable(){
+    if(!cable) return;
+    const c = cable;
+    cable = null;
+    cur.root.remove(c.group);
+    c.group.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); });
+    c.labels.forEach(L => { L.el.remove(); const i = cur.labels.indexOf(L); if(i >= 0) cur.labels.splice(i, 1); });
+    if(c.bezel) c.bezel.visible = true;
+    $('cableCard').classList.remove('show');
+    shiftTo(0, 0, 700);
+    const fc = cur.fit || computeFit();
+    camTween(fc.center, fc.r, .65, .95, 850);
+    renderUI();
+  }
+
+  function step(d){
+    const order = focusOrder();
+    let i = focus ? order.indexOf(focus.obj.userData.id) : (d > 0 ? -1 : 0);
+    for(let k = 0; k < order.length; k++){
+      i = (i + d + order.length) % order.length;
+      const o = findById(order[i]);
+      if(o){ focusPart(o); return; }
+    }
+  }
+
+  // ======================= PICKING / CONTROLS =======================
+  const ray = new T.Raycaster(), ndc = new T.Vector2();
+  function isShown(o){ while(o){ if(!o.visible) return false; o = o.parent; } return true; }
+  function pick(cx, cy){
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((cx - r.left)/r.width)*2 - 1, -((cy - r.top)/r.height)*2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hits = ray.intersectObject(cur.root, true);
+    if(focus && hits.some(h => isUnder(h.object, focus.obj))) return focus.obj;
+    for(const h of hits){
+      if(!h.object.isMesh || !isShown(h.object)) continue;
+      if(h.object.material.opacity < .1) continue;
+      let o = h.object;
+      while(o && !o.userData.id) o = o.parent;
+      if(o) return o;
+    }
+    return null;
+  }
+
+  const pointers = new Map();
+  let moved = 0, pinch0 = 0, dragging = false;
+  canvas.addEventListener('pointerdown', e => {
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    moved = 0;
+    if(pointers.size === 2){ const [a,b] = [...pointers.values()]; pinch0 = Math.hypot(a.x-b.x, a.y-b.y); }
+  });
+  canvas.addEventListener('pointermove', e => {
+    const p0 = pointers.get(e.pointerId);
+    if(!p0){ hover(e); return; }
+    const dx = e.clientX - p0.x, dy = e.clientY - p0.y;
+    p0.x = e.clientX; p0.y = e.clientY;
+    if(pointers.size === 1){
+      moved += Math.abs(dx) + Math.abs(dy);
+      if(moved > 5){
+        dragging = true; canvas.classList.add('dragging'); tip.style.display = 'none';
+        if(focus) focus.spin = false;
+        theta -= dx*.0065;
+        phi = Math.min(3.09, Math.max(.05, phi - dy*.0065));
+      }
+    } else if(pointers.size === 2){
+      moved = 99;
+      const [a,b] = [...pointers.values()];
+      const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(pinch0){ radius = clampR(radius*pinch0/d); }
+      pinch0 = d;
+    }
+  });
+  function endPointer(e){
+    if(!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+    if(pointers.size === 0){
+      if(moved <= 5){
+        const o = pick(e.clientX, e.clientY);
+        if(cable){ if(o && o.userData.id.startsWith('cab-')) selectCable(o.userData.id.slice(4)); }
+        else if(fault){}
+        else if(quiz){ if(o) quizTap(o); }
+        else if(o){
+          if(o.userData.id === 'lidScrew' && !o.userData.removed && !focus){ select(o); unscrew(o, 0, afterScrew); }
+          else focusPart(o);
+        } else if(focus) exitFocus();
+      }
+      dragging = false; canvas.classList.remove('dragging'); pinch0 = 0;
+    }
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+  canvas.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); radius = clampR(radius*(1 + e.deltaY*.0011)); }, {passive:false});
+  const clampR = r => Math.min(baseRadius*2.6, Math.max(focus ? 90 : baseRadius*.22, r));
+
+  let hoverQueued = null;
+  function hover(e){
+    hoverQueued = e;
+  }
+  function doHover(){
+    if(!hoverQueued || dragging) return;
+    if(quiz){ hoverQueued = null; tip.style.display = 'none'; canvas.classList.remove('hot'); return; }
+    const e = hoverQueued; hoverQueued = null;
+    const o = pick(e.clientX, e.clientY);
+    if(o){
+      const r = stage.getBoundingClientRect();
+      tip.textContent = lookup(o.userData.id, o).label + (o.userData.id === 'lidScrew' ? ' — tap to unscrew' : '');
+      tip.style.display = 'block';
+      tip.style.left = (e.clientX - r.left + 14) + 'px';
+      tip.style.top = (e.clientY - r.top + 14) + 'px';
+      canvas.classList.add('hot');
+    } else {
+      tip.style.display = 'none';
+      canvas.classList.remove('hot');
+    }
+  }
+
+  // ======================= LABELS =======================
+  const v3 = new T.Vector3();
+  function updateLabels(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    for(const L of cur.labels){
+      let show = state.labels;
+      if(L.opt.inside && !state.open) show = false;
+      if(L.opt.closed && state.open) show = false;
+      if(L.opt.minor && !(selected && selected.userData.id === L.id)) show = false;
+      if(focus || flow || quiz || fault) show = false;
+      if(!!L.opt.cable !== !!cable) show = false;
+      if(show && !isShown(L.obj)) show = false;
+      if(show){
+        v3.copy(L.off); L.obj.localToWorld(v3); v3.project(camera);
+        if(v3.z > 1 || v3.z < -1) show = false;
+        else L.el.style.transform = `translate(${((v3.x + 1)/2*w).toFixed(1)}px, ${((1 - v3.y)/2*h).toFixed(1)}px)`;
+      }
+      L.el.style.display = show ? '' : 'none';
+    }
+  }
+
+  // ======================= LOOP =======================
+  let last = performance.now(), blinkT = 0;
+  function loop(now){
+    const dt = Math.min(.05, (now - last)/1000); last = now;
+    runTweens(now);
+    if(state.spin && !dragging && !focus) theta += dt*.35;
+    if(focus && focus.spin && !dragging && !tweens.some(t => t.tag === 'cam')) theta += dt*.25;
+    cur.rotors.forEach(r => { r.rotation.z += dt*16*r.userData.speed; });
+    if(cur.tmm && cur.tmm.visible) cur.tmm.position.y = cur.tmmY + Math.sin(now/650)*5;
+    if(cur.air.visible){
+      const {z0, z1} = cur.air.userData;
+      cur.air.children.forEach(a => { const k = ((now/2600) + a.userData.phase) % 1; a.position.z = z0 + (z1 - z0)*k; });
+    }
+    blinkT += dt;
+    if(blinkT > .12){ blinkT = 0; cur.blink.forEach(l => { if(!l.userData.dead && Math.random() < .3) l.material.emissiveIntensity = Math.random() < .5 ? .15 : 1.4; }); }
+    if(fault && fault.blinks.length){
+      const on = Math.floor(now/450) % 2 === 0;
+      fault.blinks.forEach(b => { b.m.material.color.setHex(on ? b.c : LEDC.off); b.m.material.emissive.setHex(on ? b.c : 0); });
+    }
+    doHover();
+    if(flow && flow.steps) updateFlow(dt);
+    updateCamera();
+    applyShift();
+    renderer.render(scene, camera);
+    updateLabels();
+    updatePktTag();
+    if(quiz && quiz.t0 && !quiz.done) updateQuizTime();
+    requestAnimationFrame(loop);
+  }
+
+  function resize(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false);
+    canvas.style.width = '100%'; canvas.style.height = '100%';
+    camera.aspect = w/h; camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(() => {
+    resize();
+    appliedShift = null;
+    if(!cur) return;
+    if(focus){ cur.fit = computeFit(); return; }
+    const k = radius/baseRadius; fit(); radius = baseRadius*k;
+  }).observe(stage);
+
+  // ======================= UI =======================
+  function partsGroups(p){
+    if(pid === 'velos') return [
+      ['Front', ['blade','controller','qsfp28','mgmt','console','usb','lcd','status','alarm','ears','earScrew']],
+      ['Top', ['lid','lidScrew']],
+      ['Inside', ['fabric','tmm']],
+      ['Back', ['fans','psu','chassis']],
+    ];
+    return [
+      ['Front', [...p.ports.map(x => x.id), ...p.leds.map(x => x.id), 'bezel','ears','earScrew','frontPanel']],
+      ['Top', ['lid','lidScrew']],
+      ['Inside', ['board','cpu','tmm','sharedTable','ram','switch','hsb','crypto','ssd','aom','vrm','battery','boardScrew','fans']],
+      ['Back', ['psu','chassis']],
+    ];
+  }
+  function renderUI(){
+    const p = platforms[pid];
+    $('ptabs').innerHTML = '';
+    Object.keys(platforms).forEach(k => {
+      const b = document.createElement('button');
+      b.className = 'ptab' + (k === pid ? ' active' : '');
+      b.textContent = platforms[k].label;
+      b.onclick = () => { if(k !== pid){ pid = k; build(); } };
+      $('ptabs').appendChild(b);
+    });
+    $('model').innerHTML = p.model;
+    $('btnOpen').textContent = state.open ? 'Close chassis' : 'Unscrew & open';
+    $('btnFlow').textContent = flow ? '■ Stop packet flow' : 'Packet flow ▶';
+    $('btnQuiz').textContent = quiz ? '■ Exit quiz' : 'Quiz ▶';
+    $('btnFault').textContent = fault ? '■ Exit fault simulator' : 'Fault simulator';
+    $('btnCable').textContent = cable ? '■ Exit cabling' : 'Cabling';
+    $('btnLabels').classList.toggle('on', state.labels);
+    $('btnAir').classList.toggle('on', state.air);
+    $('btnSpin').classList.toggle('on', state.spin);
+    const host = $('parts'); host.innerHTML = '';
+    partsGroups(p).forEach(([name, ids]) => {
+      const h = document.createElement('div'); h.className = 'gname'; h.textContent = name; host.appendChild(h);
+      const row = document.createElement('div'); row.className = 'chips';
+      ids.forEach(id => {
+        const c = document.createElement('div');
+        c.className = 'chip' + (selected && selected.userData.id === id ? ' sel' : '');
+        c.dataset.id = id;
+        c.textContent = (id === 'blade' ? 'BX110 blade' : id === 'controller' ? 'SX410 controller' : lookup(id).label);
+        c.onclick = () => { if(quiz && !quiz.done) return; const o = findById(id); if(o) focusPart(o); };
+        row.appendChild(c);
+      });
+      host.appendChild(row);
+    });
+    $('family').innerHTML = p.family.map(([n, t]) => `<tr><td>${n}</td><td class="n">${t}</td></tr>`).join('');
+    if(!selected) defaultInfo();
+  }
+
+  $('btnOpen').onclick = () => state.open ? closeChassis() : openChassis();
+  $('btnLabels').onclick = () => { state.labels = !state.labels; renderUI(); };
+  $('btnAir').onclick = () => { state.air = !state.air; cur.air.visible = state.air; renderUI(); };
+  $('btnSpin').onclick = () => { state.spin = !state.spin; renderUI(); };
+  $('btnTour').onclick = () => { if(focus) exitFocus(); step(1); };
+  $('fcBack').onclick = exitFocus;
+  $('fcPrev').onclick = () => step(-1);
+  $('fcNext').onclick = () => step(1);
+  $('btnFlow').onclick = () => flow ? stopFlow() : startFlow();
+  const flowPrev = () => { if(flowReady()) goStep(Math.max(0, flow.i - 1)); };
+  const flowNext = () => { if(flowReady() && flow.i < flow.steps.length - 1) goStep(flow.i + 1); };
+  const flowPlay = () => {
+    if(!flowReady()) return;
+    if(flow.done){ flow.playing = true; goStep(0); }
+    else { flow.playing = !flow.playing; renderFlowCard(); }
+  };
+  $('flPrev').onclick = flowPrev;
+  $('flNext').onclick = flowNext;
+  $('flPlay').onclick = flowPlay;
+  $('flStop').onclick = stopFlow;
+  $('flSteps').onclick = e => { const li = e.target.closest('li'); if(li && flowReady()) goStep(+li.dataset.k); };
+  $('btnQuiz').onclick = () => quiz ? stopQuiz() : startQuiz();
+  $('quizCard').onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if(b && !b.disabled) quizAct(b.dataset.act, b.dataset.id);
+  };
+  $('btnFault').onclick = () => fault ? stopFault() : startFault();
+  $('btnCable').onclick = () => cable ? stopCable() : startCable();
+  $('faultCard').onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if(!b || b.disabled || !fault) return;
+    const a = b.dataset.act;
+    if(a === 'exit') stopFault();
+    else if(a === 'pick') pickScenario(+b.dataset.i);
+    else if(a === 'fix') fixScenario();
+    else if(a === 'list') backToList();
+  };
+  $('cableCard').onclick = e => {
+    if(!cable) return;
+    const row = e.target.closest('[data-key]');
+    if(row){ selectCable(row.dataset.key); return; }
+    const b = e.target.closest('[data-act="exit"]');
+    if(b) stopCable();
+  };
+  document.addEventListener('keydown', e => {
+    if(cable || fault){
+      if(e.key === 'Escape') cable ? stopCable() : stopFault();
+      return;
+    }
+    if(quiz){
+      if(e.key === 'Escape') stopQuiz();
+      else if(e.key === 'Enter') quizAct('next');
+      else if(e.key === 'h' || e.key === 'H') quizAct('hint');
+      return;
+    }
+    if(flow){
+      if(e.key === 'Escape') stopFlow();
+      else if(e.key === 'ArrowRight') flowNext();
+      else if(e.key === 'ArrowLeft') flowPrev();
+      else if(e.key === ' '){ e.preventDefault(); flowPlay(); }
+      return;
+    }
+    if(!focus) return;
+    if(e.key === 'Escape') exitFocus();
+    else if(e.key === 'ArrowRight') step(1);
+    else if(e.key === 'ArrowLeft') step(-1);
+  });
+  document.querySelectorAll('.vbtn[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+  $('zIn').onclick = () => { const r0 = radius; const r1 = clampR(radius*.8); tween(300, e => radius = r0 + (r1 - r0)*e); };
+  $('zOut').onclick = () => { const r0 = radius; const r1 = clampR(radius*1.25); tween(300, e => radius = r0 + (r1 - r0)*e); };
+
+  resize();
+  build();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
